@@ -92,6 +92,9 @@ function parseTxt(text) {
       if (card) out.push(card);
     }
   }
+  if (out.length) return out;
+  // Layout D: comma/semicolon rows (e.g. AI-generated CSV saved as .txt)
+  if (/[,;]/.test(text)) return parseDelimited(text);
   return out;
 }
 

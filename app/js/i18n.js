@@ -92,16 +92,42 @@ window.I18N = {
     tabPaste: 'چسباندن متن',
     dropHint: 'فایل را اینجا بکش یا برای انتخاب <b>لمس کن</b>',
     fileTypes: 'CSV · TSV · TXT · JSON (سقف ۲MB و ۵۰۰۰ کارت)',
-    pasteHint: 'هر خط: سؤال و جواب با TAB یا « - » جدا شده باشند؛ یا بلوک‌ها را با خط خالی جدا کن؛ یا JSON بچسبان.',
+    pasteHint: 'هر خط یک کارت: سؤال و جواب با TAB، ویرگول یا « - » جدا شده‌اند؛ یا بلوک‌ها را با یک خط خالی جدا کن؛ یا خروجی CSV / JSON را همین‌جا بچسبان.',
+    parseBtn: 'شناسایی کارت‌ها',
     parsedOk: '{n} کارت شناسایی شد ✓',
     parsedEmpty: 'هیچ کارتی شناسایی نشد — فرمت را چک کن',
+    errTooBig: 'حجم فایل بیشتر از ۲ مگابایت است',
     targetDeck: 'مقصد',
     newDeckOption: '＋ دستهٔ جدید…',
     importBtn: 'ایمپورت {n} کارت',
-    fmtCsv: '<b>CSV:</b> هر خط <code>سؤال,جواب</code> — جداکنندهٔ , ; یا TAB خودکار تشخیص داده می‌شود، فیلدها می‌توانند با "..." باشند، سرستون اختیاری است',
-    fmtTsv: '<b>TSV:</b> هر خط <code>سؤال<TAB>جواب</code></span>',
-    fmtTxt: '<b>TXT:</b> <code>سؤال - جواب</code> یا <code>سؤال&lt;TAB&gt;جواب</code> در هر خط، یا بلوک با خط خالی: خط اول سؤال، بقیه جواب',
-    fmtJson: '<b>JSON:</b> <code>[{"front":"سؤال","back":"جواب"}]</code> یا <code>[["سؤال","جواب"],...]</code>',
+    fmtGuideTitle: 'قالب و نمونهٔ هر فرمت',
+    fmtFrontBack: 'سمت چپِ هر خط = روی کارت (سؤال) · سمت راست = پشت کارت (جواب)',
+    fmtLegend: '⇥ یعنی کلید Tab',
+    fmtCsv: 'هر خط یک کارت <code>سؤال,جواب</code> — جداکنندهٔ , یا ; یا TAB خودکار تشخیص داده می‌شود؛ فیلدها می‌توانند داخل "..." باشند؛ سرستون اختیاری است. فایل را با پسوند .csv ذخیره کن.',
+    fmtTsv: 'مثل CSV ولی جداکننده، کلید Tab است: <code>سؤال⇥جواب</code>. فایل را با پسوند .tsv ذخیره کن.',
+    fmtTxt: 'هر خط: <code>سؤال - جواب</code>؛ یا بلوک‌ها را با یک خط خالی جدا کن — خط اول سؤال، بقیهٔ خط‌ها جواب. فایل را با پسوند .txt ذخیره کن.',
+    fmtJson: 'آرایه‌ای از کارت‌ها؛ هر کارت کلیدهای front (سؤال) و back (جواب) دارد. فایل را با پسوند .json ذخیره کن.',
+    exCsv: 'Hello,سلام\nBook,کتاب\n"Paris, France",پایتخت فرانسه\nWhat is CSS?,زبان استایل‌دهی صفحه‌های وب',
+    exTsv: 'Hello⇥سلام\nBook⇥کتاب\nWhat is CSS?⇥زبان استایل‌دهی صفحه‌های وب',
+    exTxt: 'Hello - سلام\nBook - کتاب\n\nCSS چیست؟\nزبان استایل‌دهی صفحه‌های وب',
+    exJson: '[\n  {"front": "Hello", "back": "سلام"},\n  {"front": "Book", "back": "کتاب"}\n]',
+    aiTitle: 'فلش‌کارت‌سازی با هوش مصنوعی',
+    aiDesc: 'متن تو را در چند ثانیه به کارت تبدیل می‌کند: این پرامپت آماده را کپی کن، متن خودت را جای «[متن خودت را اینجا بچسبان]» بگذار و همراه متن به ChatGPT، Claude یا Gemini بده. خروجی CSV را در تب «چسباندن متن» ایمپورت کن.',
+    aiBtn: 'نمایش پرامپت آماده',
+    aiBtnHide: 'بستن پرامپت',
+    aiCopy: 'کپی پرامپت',
+    aiCopied: 'پرامپت کپی شد ✓ آن را همراه متن خودت به هوش مصنوعی بده',
+    aiPromptHint: '۱) پرامپت را کپی کن  ۲) متن خودت را جای «[متن خودت را اینجا بچسبان]» بگذار  ۳) خروجی CSV هوش مصنوعی را در تب «چسباندن متن» ایمپورت کن',
+    promptAi: 'می‌خواهم متنِ انتهای این پیام را به فلش‌کارت تبدیل کنی. دقیقاً طبق این قوانین عمل کن:\n\n' +
+      '۱) خروجی فقط یک بلوک کد CSV باشد — هیچ توضیحی قبل یا بعد آن ننویس.\n' +
+      '۲) بدون سرستون (header ننویس).\n' +
+      '۳) هر خط = یک کارت: اول «روی کارت (سؤال)»، بعد یک ویرگول انگلیسی (,)، بعد «پشت کارت (جواب)».\n' +
+      '۴) اگر سؤال یا جواب خودش ویرگول، نقل‌قول یا خط جدید داشت، همان فیلد را داخل "..." بگذار.\n' +
+      '۵) هر کارت فقط یک مفهومِ کوچک و مشخص را پوشش دهد (اتمیک بودن کارت‌ها مهم‌ترین اصل یادگیری است).\n' +
+      '۶) روی کارت پرسشِ واضح بنویس، هرگز خودِ جواب را؛ پشت کارت پاسخِ کوتاه و دقیق بنویس.\n' +
+      '۷) اگر متن دوزبانه بود (مثلاً واژهٔ خارجی + معنی)، روی کارت واژهٔ خارجی و پشت کارت معنی فارسی را بگذار.\n' +
+      '۸) چیزی از خودت اضافه یا کم نکن؛ فقط از متنِ من کارت بساز و بخش‌های نامناسب برای کارت را نادیده بگیر.\n\n' +
+      'متن من:\n"""\n[متن خودت را اینجا بچسبان]\n"""',
     // toasts & errors
     saved: 'ذخیره شد ✓',
     deleted: 'حذف شد',
@@ -209,16 +235,42 @@ window.I18N = {
     tabPaste: 'Paste text',
     dropHint: 'Drop a file here or <b>tap to choose</b>',
     fileTypes: 'CSV · TSV · TXT · JSON (max 2 MB, 5000 cards)',
-    pasteHint: 'One card per line: front and back separated by TAB or “ - ”; or separate blocks with a blank line; or paste JSON.',
+    pasteHint: 'One card per line: front and back separated by TAB, a comma, or “ - ”; or separate blocks with a blank line; or paste CSV / JSON output right here.',
+    parseBtn: 'Detect cards',
     parsedOk: '{n} cards detected ✓',
     parsedEmpty: 'No cards detected — check the format',
+    errTooBig: 'File is larger than 2 MB',
     targetDeck: 'Destination',
     newDeckOption: '＋ New deck…',
     importBtn: 'Import {n} cards',
-    fmtCsv: '<b>CSV:</b> one row per card <code>front,back</code> — comma / semicolon / TAB auto-detected, fields may be quoted with "...", optional header row',
-    fmtTsv: '<b>TSV:</b> one row per card <code>front<TAB>back</code>',
-    fmtTxt: '<b>TXT:</b> <code>front - back</code> or <code>front&lt;TAB&gt;back</code> per line, or blank-line blocks: first line = front, the rest = back',
-    fmtJson: '<b>JSON:</b> <code>[{"front":"...","back":"..."}]</code> or <code>[["front","back"],...]</code>',
+    fmtGuideTitle: 'Format examples',
+    fmtFrontBack: 'Left side of each line = front (question) · right side = back (answer)',
+    fmtLegend: '⇥ means the Tab key',
+    fmtCsv: 'One card per line: <code>front,back</code> — comma / semicolon / TAB is auto-detected; fields may be quoted with "..."; an optional header row is skipped. Save the file with a .csv extension.',
+    fmtTsv: 'Like CSV, but separated by the Tab key: <code>front⇥back</code>. Save the file with a .tsv extension.',
+    fmtTxt: 'Each line: <code>front - back</code>; or separate blocks with a blank line — the first line is the front, the rest are the back. Save the file with a .txt extension.',
+    fmtJson: 'An array of cards; each card has a front (question) and a back (answer) key. Save the file with a .json extension.',
+    exCsv: 'Hello,سلام\nBook,کتاب\n"Paris, France",پایتخت فرانسه\nWhat is CSS?,زبان استایل‌دهی صفحه‌های وب',
+    exTsv: 'Hello⇥سلام\nBook⇥کتاب\nWhat is CSS?⇥زبان استایل‌دهی صفحه‌های وب',
+    exTxt: 'Hello - سلام\nBook - کتاب\n\nWhat is CSS?\nThe styling language of the web',
+    exJson: '[\n  {"front": "Hello", "back": "سلام"},\n  {"front": "Book", "back": "کتاب"}\n]',
+    aiTitle: 'Make flashcards with AI',
+    aiDesc: 'Turns your text into cards in seconds: copy this ready-made prompt, replace “[paste your text here]” with your own text, and give both to ChatGPT, Claude or Gemini. Then import the CSV output in the “Paste text” tab.',
+    aiBtn: 'Show ready prompt',
+    aiBtnHide: 'Hide prompt',
+    aiCopy: 'Copy prompt',
+    aiCopied: 'Prompt copied ✓ give it to an AI together with your text',
+    aiPromptHint: '1) Copy the prompt  2) Put your own text in place of “[paste your text here]”  3) Import the AI’s CSV output in the “Paste text” tab',
+    promptAi: 'I want you to turn the TEXT at the end of this message into flashcards. Follow these rules exactly:\n\n' +
+      '1) Output ONLY one CSV code block — no explanations before or after it.\n' +
+      '2) No header row.\n' +
+      '3) One card per line: the front (question), then a comma (,), then the back (answer).\n' +
+      '4) If a front or back contains a comma, quote, or newline, wrap that whole field in "...".\n' +
+      '5) Each card must cover one small, atomic idea — the most important principle of effective flashcards.\n' +
+      '6) The front must be a clear prompt or question, never the answer itself; the back is a short, precise answer.\n' +
+      '7) If the text is bilingual (e.g. a foreign word and its meaning), put the foreign word on the front and the meaning on the back.\n' +
+      '8) Add nothing and remove nothing — build cards only from my text and ignore parts that do not make good cards.\n\n' +
+      'My text:\n"""\n[paste your text here]\n"""',
     saved: 'Saved ✓',
     deleted: 'Deleted',
     added: '{n} cards added ✓',

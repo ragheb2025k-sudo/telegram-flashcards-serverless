@@ -35,6 +35,8 @@ const T = {
       '<code>TSV:</code> هر خط: سؤال&lt;TAB&gt;جواب\n' +
       '<code>TXT:</code> هر خط <code>سؤال&lt;TAB&gt;جواب</code> یا <code>سؤال - جواب</code> یا بلوک‌های جداشده با خط خالی (خط اول سؤال، بقیه جواب).\n' +
       '<code>JSON:</code> [{"front":"سؤال","back":"جواب"}] یا [["سؤال","جواب"],...]\n\n' +
+      '<b>نکته: با هوش مصنوعی کارت بساز</b>\n' +
+      'در مینی‌اپ، داخل «ایمپورت کارت‌ها» یک پرامپت آماده برای تبدیل هر متنی به فایل فلش‌کارت وجود دارد؛ آن را کپی کنید و همراه متن خودت به ChatGPT یا Gemini بده، خروجی CSV را ایمپورت کن.\n\n' +
       '<b>مرور و زمان‌بندی</b>\n' +
       'هر کارت در یکی از ۵ خانه است. جواب درست = یک خانه بالاتر (فاصلهٔ مرور بلندتر)، جواب ناپاس = برگشت به خانهٔ اول یا خانهٔ قبلی (قابل تنظیم در مینی‌اپ). فاصله‌ها: ۱، ۳، ۷، ۱۶ و ۳۵ روز.\n\n' +
       '<b>پشتیبان‌گیری</b>\n' +
@@ -101,6 +103,8 @@ const T = {
       '<code>TSV:</code> one row per card: front&lt;TAB&gt;back\n' +
       '<code>TXT:</code> per line <code>front&lt;TAB&gt;back</code> or <code>front - back</code>, or blocks separated by a blank line (first line = front, the rest = back).\n' +
       '<code>JSON:</code> [{"front":"...","back":"..."}] or [["front","back"],...]\n\n' +
+      '<b>Tip: build cards with AI</b>\n' +
+      'Inside the Mini App’s “Import cards” dialog you get a ready-made prompt that turns any text into a flashcard file — copy it, give it to ChatGPT or Gemini together with your text, then import the CSV output.\n\n' +
       '<b>Reviewing & scheduling</b>\n' +
       'Every card lives in one of 5 houses. A correct answer promotes it one house (longer interval); a miss sends it back to house 1 — or to the previous house (configurable in the Mini App). Intervals: 1, 3, 7, 16 and 35 days.\n\n' +
       '<b>Backup</b>\n' +

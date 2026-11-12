@@ -27,7 +27,7 @@ A complete **spaced-repetition flashcard bot** built on [Telegram Serverless](ht
 - Modern, warm-neutral UI, mobile-first, RTL-aware (Vazirmatn for Persian)
 - **Deck management** — create / rename / delete decks with emoji
 - **Manual card creation** — "save & next" for fast bulk entry
-- **File import in-app** — pick a file or paste text, with a live format guide and a parsed-cards preview
+- **File import in-app** — pick a file or paste text, with a live format guide (real examples for CSV / TSV / TXT / JSON), a parsed-cards preview, and a **ready-to-copy AI prompt**: paste the prompt + your own text into ChatGPT / Claude / Gemini, then import the CSV it returns (the “Paste text” tab accepts comma CSV directly)
 - **Review session** — big 3D flip card; green ✓ / red ✗ circle buttons with the flip button between them; progress bar; house indicator; re-queue of missed cards; haptic feedback; keyboard shortcuts (Space = flip, 1 = wrong, 2 = correct)
 - **Session summary** — correct/wrong counts, what's left
 - **House filters** — every card lives in one of 5 houses (Leitner boxes)
@@ -65,11 +65,22 @@ The ZIP is written by a tiny dependency-free STORE-mode ZIP writer (`tgcloud/lib
 |---|---|---|
 | CSV | `.csv` | one row per card: `front,back` — comma / semicolon / TAB **auto-detected**, quoted fields supported, optional header row is skipped |
 | TSV | `.tsv` | one row per card: `front<TAB>back` |
-| TXT | `.txt` | per line `front<TAB>back` **or** `front - back`, **or** blocks separated by a blank line (first line = front, remaining lines = back) |
+| TXT | `.txt` | per line `front<TAB>back` **or** `front - back`, **or** blocks separated by a blank line (first line = front, remaining lines = back), **or** comma/semicolon rows (e.g. AI-generated CSV saved as `.txt`) |
 | JSON | `.json` | `[{"front":"...","back":"..."}]` (aliases: `question/answer`, `word/meaning`, `سؤال/جواب`, …) or `[["front","back"],...]` |
 | Backup | `.zip` / `.json` | this bot's own backup → restore |
 
 Limits: 2 MB and 5000 cards per file. Encoding: UTF-8.
+
+Example of the canonical CSV layout — left column = **front (question)**, right column = **back (answer)**:
+
+```
+Hello,سلام
+Book,کتاب
+"Paris, France",پایتخت فرانسه
+```
+
+### Turn any text into cards with AI (built-in prompt)
+The Mini App's import dialog ships with a ready-made, copyable prompt. Workflow: copy the prompt → put your own text in place of `[paste your text here]` → give it to ChatGPT / Claude / Gemini together with your text → copy the CSV the AI returns → paste it into the “Paste text” tab (or save it as `cards.csv` and send it to the bot chat). The prompt forces the AI to produce exactly this format: one card per line, `front,back`, quoted fields, no header, atomic cards.
 
 ## Project structure
 
@@ -163,7 +174,7 @@ The Mini App is served at `https://app<app_id>.tgcloud.ai/` (printed by `push`).
 
 ### امکانات مینی‌اپ
 - مدیریت دسته‌ها با ایموجی، ساخت کارت دستی («ذخیره و بعدی» برای ورود سریع)
-- ایمپورت فایل یا چسباندن متن با راهنمای فرمت و پیش‌نمایش تعداد کارت‌های شناسایی‌شده
+- ایمپورت فایل یا چسباندن متن با راهنمای فرمت (نمونهٔ واقعی برای CSV / TSV / TXT / JSON)، پیش‌نمایش تعداد کارت‌های شناسایی‌شده و **پرامپت آمادهٔ قابل‌کپی برای هوش مصنوعی**: پرامپت را همراه متن خودت به ChatGPT / Claude / Gemini بده، خروجی CSV را در تب «چسباندن متن» ایمپورت کن
 - **جلسه‌ی مرور**: کارت سه‌بعدی قابل فلپ، دایره‌ی سبز ✓ و دایره‌ی قرمز ✗ با دکمه‌ی برگرداندن بین آن‌ها، نوار پیشرفت، نشانگر خانه، صف دوباره‌ی کارت‌های ناپاس، هپتیک و میان‌برهای کیبورد
 - خلاصه‌ی جلسه، فیلتر بر اساس خانه‌ها، شمارنده‌ی روزهای پیاپی 🔥
 - **تنظیمات**: زبان، پوسته (روشن/تاریک/خودکار)، **رفتار کارت ناپاس: برگشت به خانه‌ی اول یا خانه‌ی قبلی**، پشتیبان‌گیری ZIP
@@ -178,11 +189,22 @@ The Mini App is served at `https://app<app_id>.tgcloud.ai/` (printed by `push`).
 |---|---|---|
 | CSV | `.csv` | هر خط `سؤال,جواب` — جداکننده‌ی `,` `;` یا TAB خودکار، فیلد با `"..."`، سرستون اختیاری |
 | TSV | `.tsv` | هر خط `سؤال<TAB>جواب` |
-| TXT | `.txt` | `سؤال - جواب` یا `سؤال<TAB>جواب` در هر خط، یا بلوک با خط خالی (خط اول سؤال، بقیه جواب) |
+| TXT | `.txt` | `سؤال - جواب` یا `سؤال<TAB>جواب` در هر خط، یا بلوک با خط خالی (خط اول سؤال، بقیه جواب)، یا خطوط با ویرگول/نقطه‌ویرگول (مثل CSV ساخته‌شده توسط هوش مصنوعی با پسوند .txt) |
 | JSON | `.json` | `[{"front":"...","back":"..."}]` یا `[["سؤال","جواب"],...]` |
 | پشتیبان | `.zip` / `.json` | فرمت خود بات → بازیابی |
 
 محدودیت هر فایل: ۲ مگابایت و ۵۰۰۰ کارت، انکدینگ UTF-8.
+
+نمونهٔ چینش استاندارد CSV — ستون چپ = **روی کارت (سؤال)**، ستون راست = **پشت کارت (جواب)**:
+
+```
+Hello,سلام
+Book,کتاب
+"Paris, France",پایتخت فرانسه
+```
+
+### تبدیل هر متنی به فلش‌کارت با هوش مصنوعی (پرامپت آماده)
+در پنجرهٔ «ایمپورت کارت‌ها»ی مینی‌اپ یک پرامپت آمادهٔ قابل‌کپی وجود دارد. مراحل: پرامپت را کپی کن → متن خودت را جای `[متن خودت را اینجا بچسبان]` بگذار → همراه متن به ChatGPT / Claude / Gemini بده → خروجی CSV را کپی کن و در تب «چسباندن متن» بچسبان (یا به‌صورت `cards.csv` ذخیره و به چت بات بفرست). پرامپت هوش مصنوعی را مجبور می‌کند دقیقاً با همین فرمت خروجی بدهد: هر خط یک کارت، `سؤال,جواب`، فیلدهای کوتیشن‌شده، بدون سرستون و کارت‌های اتمیک.
 
 ### ساخت پشتیبان ZIP
 ```

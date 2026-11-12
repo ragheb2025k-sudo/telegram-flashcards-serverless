@@ -309,6 +309,25 @@
     });
   }
 
+  function copyText(text) {
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch { return false; }
+    };
+    if (navigator.clipboard?.writeText) {
+      return navigator.clipboard.writeText(text).then(() => true).catch(fallback);
+    }
+    return Promise.resolve(fallback());
+  }
+
   // ---------------- modal engine ----------------
   function openModal(html, setup) {
     closeModal();
@@ -704,11 +723,22 @@
     }
     // try JSON
     if (text.trim().startsWith('[')) return parseJsonText(text);
+    // layout "front - back"
     const out = [];
     for (const line of lines) {
       const l = line.trim(); if (!l) continue;
       const idx = l.indexOf(' - ');
       if (idx > 0) { const f = l.slice(0, idx).trim(), b = l.slice(idx + 3).trim(); if (f && b) out.push({ front: f, back: b }); }
+    }
+    if (out.length) return out;
+    // comma / semicolon CSV (e.g. AI-generated flashcard exports pasted as text)
+    const nonEmpty = lines.filter((l) => l.trim());
+    if (nonEmpty.length >= 2) {
+      const count = (ch) => nonEmpty.reduce((n, l) => n + (l.split(ch).length - 1), 0);
+      const pairs = [[',', count(',')], [';', count(';')], ['\t', count('\t')]].sort((a, b) => b[1] - a[1]);
+      if (pairs[0][1] >= nonEmpty.length * 0.6) {
+        return rowsToCards(parseCsvText(text, pairs[0][0]));
+      }
     }
     return out;
   }
@@ -756,6 +786,9 @@
     const deckOptions = state.decks.map((d) =>
       `<option value="${d.id}">${esc(d.emoji)} ${esc(d.name)}</option>`).join('');
 
+    const FMT_DESC = { csv: 'fmtCsv', tsv: 'fmtTsv', txt: 'fmtTxt', json: 'fmtJson' };
+    const FMT_EX = { csv: 'exCsv', tsv: 'exTsv', txt: 'exTxt', json: 'exJson' };
+
     openModal(`
       <h3>${esc(T('importTitle'))}</h3>
       <div class="import-tabs">
@@ -764,8 +797,11 @@
       </div>
       <div data-pane="file">
         <label class="file-drop" id="file-drop">
-          <span class="fd-icon">📂</span>
-          ${T('dropHint')}<br><small>${esc(T('fileTypes'))}</small>
+          <span class="fd-icon" id="fd-icon">📂</span>
+          <span class="fd-text">
+            <span class="fd-main">${T('dropHint')}</span>
+            <small id="fd-sub">${esc(T('fileTypes'))}</small>
+          </span>
           <input type="file" id="file-input" accept=".csv,.tsv,.txt,.json,.md" hidden>
         </label>
       </div>
@@ -773,16 +809,34 @@
         <div class="field">
           <textarea id="paste-area" dir="auto" placeholder="${esc(T('pasteHint'))}"></textarea>
         </div>
-        <button class="btn btn-secondary" data-x="parse">${esc(T('save'))}</button>
+        <button class="btn btn-secondary btn-wide" data-x="parse">${esc(T('parseBtn'))}</button>
       </div>
       <div class="fmt-guide">
-        <details>
-          <summary>${esc(state.lang === 'fa' ? 'فرمت‌های پشتیبانی‌شده' : 'Supported formats')}</summary>
-          <div>${T('fmtCsv')}</div>
-          <div>${T('fmtTsv')}</div>
-          <div>${T('fmtTxt')}</div>
-          <div>${T('fmtJson')}</div>
-        </details>
+        <div class="fmt-head">${esc(T('fmtGuideTitle'))}</div>
+        <div class="fmt-chips">
+          <button type="button" class="active" data-fmt="csv">CSV</button>
+          <button type="button" data-fmt="tsv">TSV</button>
+          <button type="button" data-fmt="txt">TXT</button>
+          <button type="button" data-fmt="json">JSON</button>
+        </div>
+        <div class="fmt-desc" id="fmt-desc"></div>
+        <pre class="fmt-example" id="fmt-example" dir="ltr"></pre>
+        <div class="fmt-note">${esc(T('fmtFrontBack'))} · ${esc(T('fmtLegend'))}</div>
+      </div>
+      <div class="ai-card">
+        <div class="ai-row">
+          <span class="ai-icon">✨</span>
+          <div class="ai-body">
+            <b>${esc(T('aiTitle'))}</b>
+            <small>${esc(T('aiDesc'))}</small>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm ai-toggle" data-x="ai-toggle">${esc(T('aiBtn'))}</button>
+        <div class="ai-prompt" id="ai-prompt">
+          <textarea readonly id="ai-prompt-text" dir="auto"></textarea>
+          <p class="ai-hint">${esc(T('aiPromptHint'))}</p>
+          <button class="btn btn-primary btn-sm ai-copy" data-x="ai-copy">${esc(T('aiCopy'))}</button>
+        </div>
       </div>
       <div class="import-preview hidden" id="import-preview"></div>
       <div class="field">
@@ -825,6 +879,31 @@
         };
       });
 
+      // format guide chips
+      const setFmt = (f) => {
+        root.querySelectorAll('[data-fmt]').forEach((b) => b.classList.toggle('active', b.dataset.fmt === f));
+        root.querySelector('#fmt-desc').innerHTML = T(FMT_DESC[f]);
+        root.querySelector('#fmt-example').textContent = T(FMT_EX[f]);
+      };
+      root.querySelectorAll('[data-fmt]').forEach((b) => {
+        b.onclick = () => { Haptic.tap(); setFmt(b.dataset.fmt); };
+      });
+      setFmt('csv');
+
+      // AI prompt
+      const aiWrap = root.querySelector('#ai-prompt');
+      const aiToggle = root.querySelector('[data-x="ai-toggle"]');
+      root.querySelector('#ai-prompt-text').value = T('promptAi');
+      aiToggle.onclick = () => {
+        Haptic.tap();
+        const open = aiWrap.classList.toggle('open');
+        aiToggle.textContent = open ? T('aiBtnHide') : T('aiBtn');
+      };
+      root.querySelector('[data-x="ai-copy"]').onclick = async () => {
+        const ok = await copyText(root.querySelector('#ai-prompt-text').value);
+        toast(ok ? T('aiCopied') : T('errGeneric'));
+      };
+
       // file input
       const fileInput = root.querySelector('#file-input');
       const drop = root.querySelector('#file-drop');
@@ -835,14 +914,17 @@
       fileInput.onchange = () => { if (fileInput.files[0]) readFile(fileInput.files[0]); };
 
       function readFile(file) {
-        if (file.size > 2 * 1024 * 1024) { preview.classList.add('warn'); preview.textContent = T('parsedEmpty'); return; }
+        if (file.size > 2 * 1024 * 1024) {
+          parsed = [];
+          updPreview();
+          preview.textContent = T('errTooBig');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = () => {
           parsed = parseFileText(String(reader.result || ''), file.name).slice(0, 5000);
-          if (parsed.length && targetDeckId === 'new') {
-            const w = root.querySelector('#new-deck-name');
-            if (!w.value) w.value = file.name.replace(/\.[a-z0-9]+$/i, '');
-          }
+          root.querySelector('#fd-icon').textContent = '📄';
+          root.querySelector('.fd-main').textContent = file.name;
           updPreview();
         };
         reader.readAsText(file);
@@ -865,17 +947,18 @@
       importBtn.onclick = async () => {
         if (!parsed.length) return;
         importBtn.disabled = true;
+        let res;
         try {
           if (targetDeckId === 'new') {
             const name = root.querySelector('#new-deck-name').value.trim()
               || (state.lang === 'fa' ? 'دستهٔ وارداتی' : 'Imported deck');
-            const res = await api('importDeck', { name, emoji: '📥', cards: parsed });
+            res = await api('importDeck', { name, emoji: '📥', cards: parsed });
             closeModal();
             toast(T('imported', { n: res.added, deck: res.deck.name }));
             await loadHome();
             openDeck(res.deck.id);
           } else {
-            const res = await api('addCards', { deckId: Number(targetDeckId), cards: parsed });
+            res = await api('addCards', { deckId: Number(targetDeckId), cards: parsed });
             closeModal();
             const d = state.decks.find((x) => x.id === Number(targetDeckId));
             toast(T('imported', { n: res.added, deck: d ? d.name : '' }));
