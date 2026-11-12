@@ -24,7 +24,11 @@ const T = {
       '/backup — گرفتن فایل پشتیبان (ZIP)\n' +
       '/stats — آمار یادگیری\n' +
       '/lang — تغییر زبان\n' +
-      '/help — راهنمای کامل',
+      '/help — راهنمای کامل\n' +
+      '/privacy — سیاست حفظ حریم خصوصی\n' +
+      '/terms — شرایط استفاده\n' +
+      '/support — پشتیبانی\n' +
+      '/delete_my_data — حذف کامل داده‌ها',
     help:
       '📖 <b>راهنمای فلش‌کارت</b>\n\n' +
       '<b>ساخت کارت</b>\n' +
@@ -74,6 +78,42 @@ const T = {
     langChanged: '✅ زبان عوض شد. از حالا {lang} جواب می‌دهم.',
     openHint: '👇 مینی‌اپ را باز کنید:',
     errGeneric: '⚠️ خطایی رخ داد. دوباره تلاش کنید.',
+    rateLimited: '⏳ کمی آرام‌تر! چند لحظه بعد دوباره تلاش کنید.',
+    privateOnly: '🔒 این فرمان فقط در چت خصوصی با بات کار می‌کند. لطفاً همین‌جا در پیوی بفرستید.',
+    privacy:
+      '🔐 <b>سیاست حفظ حریم خصوصی</b>\n\n' +
+      'چه داده‌هایی ذخیره می‌شود:\n' +
+      '• شناسهٔ عددی تلگرام، نام کوچک، کد زبان\n' +
+      '• محتوای فلش‌کارت‌های شما: دسته‌ها، کارت‌ها، پیشرفت مرور، هدف روزانه و زنجیره\n\n' +
+      'داده‌ها فقط برای ارائهٔ خدمت ربات استفاده می‌شود؛ به شخص ثالث فروخته یا واگذار نمی‌شود. فایل‌های پشتیبان (ZIP) فقط در چت خودتان ساخته می‌شوند.\n\n' +
+      '<b>حذف همهٔ داده‌ها:</b> فرمان /delete_my_data را بفرستید یا در تنظیمات مینی‌اپ گزینهٔ «حذف کامل داده‌ها» را بزنید.\n\n' +
+      'سازنده: Botmaker Telegram (@Botmaker_Telegram)\nایمیل: ragheb2025k@gmail.com',
+    terms:
+      '📜 <b>شرایط استفاده</b>\n\n' +
+      '۱. این ربات برای یادگیری شخصی با فلش‌کارت است؛ استفادهٔ منصفانه و بدون سوءاستفاده (اسپم، تلاش برای نفوذ یا بارگذاری محتوای غیرقانونی) الزامی است.\n' +
+      '۲. مسئولیت محتوای کارت‌ها بر عهدهٔ خود شماست؛ محتوای خلاف قوانین را بارگذاری نکنید.\n' +
+      '۳. خدمت «همان‌طور که هست» ارائه می‌شود؛ برای محافظت از داده‌ها به‌طور دوره‌ای با /backup پشتیبان بگیرید.\n' +
+      '۴. در حال حاضر هیچ پرداختی در این ربات انجام نمی‌شود؛ اگر در آینده اضافه شود، پیش از هر پرداخت شرایط دقیق اعلام خواهد شد.\n\n' +
+      'سازنده: Botmaker Telegram (@Botmaker_Telegram)\nایمیل: ragheb2025k@gmail.com',
+    support:
+      '💬 <b>پشتیبانی</b>\n\n' +
+      'برای گزارش مشکل، پیشنهاد یا هر سؤالی با ما در تماس باشید:\n\n' +
+      '• کانال پشتیبانی: @Botmaker_Telegram\n' +
+      '• ایمیل: ragheb2025k@gmail.com\n\n' +
+      'معمولاً در کمتر از ۲۴ ساعت پاسخ می‌دهیم.',
+    paySupport:
+      '💳 <b>پشتیبانی پرداخت</b>\n\n' +
+      'این ربات در حال حاضر هیچ پرداخت، اشتراک یا خریدی ندارد؛ از شما هیچ درخواست پرداختی نمی‌شود.\n\n' +
+      'اگر پیامی از طرف این بات درخواست پرداخت کرد، آن را به عنوان سوءاستفاده گزارش دهید و با پشتیبانی در میان بگذارید:\n' +
+      '• @Botmaker_Telegram\n' +
+      '• ragheb2025k@gmail.com',
+    deleteConfirm:
+      '🗑️ <b>حذف کامل داده‌ها</b>\n\n' +
+      'همهٔ دسته‌ها، کارت‌ها، پیشرفت مرور و تنظیمات شما برای همیشه حذف می‌شود و قابل بازیابی نیست. مطمئنید؟',
+    deleteYes: 'بله، همه حذف شود',
+    deleteNo: 'انصراف',
+    deleteDone: '✅ همهٔ داده‌های شما حذف شد. برای شروع دوباره /start بفرستید.',
+    deleteCancelled: 'باشه — داده‌های شما دست‌نخورده ماند.',
   },
   en: {
     chooseLang: '🇬🇧 English or 🇮🇷 فارسی؟\n\nChoose the language of the bot and the Mini App:',
@@ -92,7 +132,11 @@ const T = {
       '/backup — export a backup file (ZIP)\n' +
       '/stats — your learning stats\n' +
       '/lang — change language\n' +
-      '/help — full guide',
+      '/help — full guide\n' +
+      '/privacy — privacy policy\n' +
+      '/terms — terms of service\n' +
+      '/support — support\n' +
+      '/delete_my_data — delete all my data',
     help:
       '📖 <b>FlashCards guide</b>\n\n' +
       '<b>Creating cards</b>\n' +
@@ -142,6 +186,42 @@ const T = {
     langChanged: '✅ Language changed. I will reply in {lang} from now on.',
     openHint: '👇 Open the Mini App:',
     errGeneric: '⚠️ Something went wrong. Please try again.',
+    rateLimited: '⏳ Easy there! Please wait a moment and try again.',
+    privateOnly: '🔒 This command only works in a private chat with the bot. Please send it here in DM.',
+    privacy:
+      '🔐 <b>Privacy Policy</b>\n\n' +
+      'What we store:\n' +
+      '• Your numeric Telegram id, first name, language code\n' +
+      '• Your flashcard content: decks, cards, review progress, daily goal & streak\n\n' +
+      'Data is used solely to provide the service; it is never sold or shared with third parties. Backups (ZIP) are built only into your own chat.\n\n' +
+      '<b>Delete everything:</b> send /delete_my_data, or use “Delete all my data” in the Mini App settings.\n\n' +
+      'Creator: Botmaker Telegram (@Botmaker_Telegram)\nEmail: ragheb2025k@gmail.com',
+    terms:
+      '📜 <b>Terms of Service</b>\n\n' +
+      '1. This bot is for personal learning with flashcards; fair use is required — no spam, abuse, or unlawful uploads.\n' +
+      '2. You are responsible for your card content; do not upload anything illegal.\n' +
+      '3. The service is provided “as is”; protect yourself by running /backup regularly.\n' +
+      '4. No payments exist in this bot today; if that ever changes, exact terms will be shown before any purchase.\n\n' +
+      'Creator: Botmaker Telegram (@Botmaker_Telegram)\nEmail: ragheb2025k@gmail.com',
+    support:
+      '💬 <b>Support</b>\n\n' +
+      'For bugs, ideas or any question, reach us here:\n\n' +
+      '• Support channel: @Botmaker_Telegram\n' +
+      '• Email: ragheb2025k@gmail.com\n\n' +
+      'We usually reply within 24 hours.',
+    paySupport:
+      '💳 <b>Payment support</b>\n\n' +
+      'This bot currently has no payments, subscriptions or purchases — you will never be asked to pay here.\n\n' +
+      'If anything ever asks you for money “on behalf of” this bot, report it as abuse and contact support:\n' +
+      '• @Botmaker_Telegram\n' +
+      '• ragheb2025k@gmail.com',
+    deleteConfirm:
+      '🗑️ <b>Delete all my data</b>\n\n' +
+      'All your decks, cards, review progress and settings will be erased permanently. This cannot be undone. Are you sure?',
+    deleteYes: 'Yes, delete everything',
+    deleteNo: 'Cancel',
+    deleteDone: '✅ All your data has been deleted. Send /start to begin again.',
+    deleteCancelled: 'Okay — your data was kept untouched.',
   },
 };
 
@@ -178,6 +258,25 @@ export function langKeyboard() {
     inline_keyboard: [[
       { text: t('fa', 'chooseLangBtnFa'), callback_data: 'lang:fa' },
       { text: t('en', 'chooseLangBtnEn'), callback_data: 'lang:en' },
+    ]],
+  };
+}
+
+// Inline keyboard for /support — one-tap link to the support channel.
+export function supportKeyboard(lang) {
+  return {
+    inline_keyboard: [[
+      { text: `💬 ${lang === 'fa' ? 'کانال پشتیبانی' : 'Support channel'}`, url: 'https://t.me/Botmaker_Telegram' },
+    ]],
+  };
+}
+
+// Inline keyboard for the /delete_my_data confirmation (Gate 5.1.5).
+export function deleteConfirmKeyboard(lang) {
+  return {
+    inline_keyboard: [[
+      { text: `🗑️ ${t(lang, 'deleteYes')}`, callback_data: 'del:yes' },
+      { text: t(lang, 'deleteNo'), callback_data: 'del:no' },
     ]],
   };
 }

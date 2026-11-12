@@ -40,6 +40,9 @@
     theme: 'auto',
     failBehavior: 'house1',
     dailyGoal: 20,
+    uiFont: 1,
+    cardFont: 1,
+    onboarded: false,
     streak: 0,
     todayCount: 0,
     goalLog: [],
@@ -100,6 +103,13 @@
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 120;
   }
 
+  // ---------------- font scaling (Settings > Font size) ----------------
+  function applyFonts() {
+    const s = document.documentElement.style;
+    s.setProperty('--fs-ui', String(Math.min(1.35, Math.max(0.85, Number(state.uiFont) || 1))));
+    s.setProperty('--fs-card', String(Math.min(1.8, Math.max(0.8, Number(state.cardFont) || 1))));
+  }
+
   // ---------------- API layer ----------------
   function serverlessCall(name, input) {
     return new Promise((resolve, reject) => {
@@ -125,7 +135,8 @@
         seq: 1,
         user: {
           lang: state.lang, theme: state.theme, failBehavior: state.failBehavior,
-          dailyGoal: 20, streak: 0, lastStudyDate: null,
+          dailyGoal: 20, uiFont: 1, cardFont: 1, onboarded: 0,
+          streak: 0, lastStudyDate: null,
           lastGoalDate: null, todayDate: null, todayCount: 0, goalLog: [],
         },
         decks: [],
@@ -221,7 +232,7 @@
             fresh: d.cards.filter((c) => c.reps === 0 && c.lapses === 0).length,
           }));
           res = {
-            user: { ...db.user, goalLog: db.user.goalLog || [], todayCount: tc, todayDate: today, firstName: '' },
+            user: { ...db.user, goalLog: db.user.goalLog || [], todayCount: tc, todayDate: today, firstName: '', onboarded: !!db.user.onboarded },
             totals: {
               decks: decks.length,
               cards: decks.reduce((a, d) => a + d.cards, 0),
@@ -331,8 +342,19 @@
             const n = Number(input.dailyGoal);
             if (Number.isFinite(n)) db.user.dailyGoal = Math.min(500, Math.max(1, Math.round(n)));
           }
-          res = { user: { ...db.user, goalLog: db.user.goalLog || [] } };
+          for (const k of ['uiFont', 'cardFont']) {
+            if (input[k] != null && input[k] !== '') {
+              const n = Number(input[k]);
+              if (Number.isFinite(n)) db.user[k] = Math.round(Math.min(1.8, Math.max(0.8, n)) * 100) / 100;
+            }
+          }
+          if (input.onboarded != null) db.user.onboarded = input.onboarded ? 1 : 0;
+          res = { user: { ...db.user, goalLog: db.user.goalLog || [], onboarded: !!db.user.onboarded } };
           break;
+        }
+        case 'deleteMyData': {
+          localStorage.removeItem(this.KEY);
+          return { ok: true, cardsDeleted: 0, decksDeleted: 0 }; // skip this.save(db)
         }
         case 'createBackup': {
           const n = db.decks.reduce((a, d) => a + d.cards.length, 0);
@@ -442,6 +464,9 @@
       state.failBehavior = data.user.failBehavior || state.failBehavior;
       state.streak = data.user.streak || 0;
       state.dailyGoal = data.user.dailyGoal || 20;
+      state.uiFont = Number(data.user.uiFont) || 1;
+      state.cardFont = Number(data.user.cardFont) || 1;
+      state.onboarded = Boolean(data.user.onboarded);
       state.todayCount = data.user.todayCount || 0;
       state.goalLog = Array.isArray(data.user.goalLog) ? data.user.goalLog : [];
       state.lastGoalDate = data.user.lastGoalDate || null;
@@ -450,8 +475,11 @@
       state.totals = data.totals || { decks: 0, cards: 0, due: 0, mastered: 0 };
       applyLang();
       applyTheme();
+      applyFonts();
       renderHome();
       show('home');
+      // first-ever visit → walk the user through the guide (configurable in Settings)
+      if (!state.onboarded) showGuide(true);
     } catch (e) {
       console.error(e);
       $('#boot').classList.add('done');
@@ -468,11 +496,22 @@
     chip.hidden = false;
     $('#streak-val').textContent = state.streak || 0;
 
-    // review-all button
+    // review-all button — shows how many cards today's session holds,
+    // based on the daily goal: min(due, goal − already-done-today).
+    // After an early exit it naturally shows the remaining count (e.g. 12 of 20).
     const btnAll = $('#btn-review-all');
-    if (state.totals.due > 0) {
+    const goal = Math.max(1, state.dailyGoal || 20);
+    const leftToGoal = Math.max(0, goal - (state.todayCount || 0));
+    const due = state.totals.due;
+    if (due > 0) {
       btnAll.disabled = false;
-      $('#review-all-label').textContent = T('reviewAll', { n: state.totals.due });
+      if (leftToGoal > 0) {
+        // session size = today's remaining goal, capped by what is actually due
+        $('#review-all-label').textContent = T('reviewAll', { n: Math.min(due, leftToGoal) });
+      } else {
+        // goal already ticked today → whatever is due is extra practice
+        $('#review-all-label').textContent = T('reviewExtra', { n: due });
+      }
     } else {
       btnAll.disabled = true;
       $('#review-all-label').textContent = T('reviewAllNone');
@@ -708,7 +747,11 @@
       state.todayCount = data.user.todayCount || 0;
       state.goalLog = Array.isArray(data.user.goalLog) ? data.user.goalLog : state.goalLog;
       state.lastGoalDate = data.user.lastGoalDate || state.lastGoalDate;
+      state.uiFont = Number(data.user.uiFont) || state.uiFont;
+      state.cardFont = Number(data.user.cardFont) || state.cardFont;
+      applyFonts();
       renderGoal();
+      renderHome();
     } catch {}
   }
 
@@ -1103,7 +1146,9 @@
   async function startReview(deckId) {
     Haptic.tap();
     try {
-      const data = await api('getReview', { deckId: deckId ?? null, limit: 20 });
+      // session size follows the daily goal (e.g. 20); the server caps it at 200
+      const limit = Math.max(1, Math.min(200, Math.round(state.dailyGoal) || 20));
+      const data = await api('getReview', { deckId: deckId ?? null, limit });
       if (!data.cards.length) {
         toast(T('reviewAllNone'));
         return;
@@ -1147,8 +1192,8 @@
     $('#label-back').textContent = T('answer');
     $('#hint-tap').textContent = T('tapToFlip');
     const done = s.done;
-    $('#review-count').textContent = T('progress', { done, total: s.total + s.done });
-    $('#review-progress').style.width = `${s.total + s.done ? (done / (s.total + s.done)) * 100 : 0}%`;
+    $('#review-count').textContent = T('progress', { done, total: s.total + (s.extra || 0) });
+    $('#review-progress').style.width = `${s.total + (s.extra || 0) ? (done / (s.total + (s.extra || 0))) * 100 : 0}%`;
     $('#review-house').textContent = T('house', { n: c.house });
   }
 
@@ -1178,10 +1223,7 @@
       if (res.streak != null) state.streak = res.streak;
       if (res.todayCount != null) state.todayCount = res.todayCount;
       if (res.dailyGoal != null) state.dailyGoal = res.dailyGoal;
-      if (res.goalJustMet) {
-        toast(T('streakKept'));
-        Haptic.ok();
-      }
+      const justMetGoal = Boolean(res.goalJustMet);
 
       // house movement indicator
       const movedKey = res.moved === 'up' ? 'houseMovedUp' : res.moved === 'down' ? 'houseMovedDown' : 'houseStayed';
@@ -1189,10 +1231,16 @@
       if (res.moved === 'down') toast(T('relearnSoon'));
 
       // requeue missed cards at the end of the queue
-      if (res.requeue) s.queue.push({ ...res.card });
+      if (res.requeue) { s.queue.push({ ...res.card }); s.extra = (s.extra || 0) + 1; }
 
       setTimeout(() => {
         s.awaiting = false;
+        if (justMetGoal) {
+          // pause here — the celebration modal (Continue / Exit) decides what's next
+          Haptic.ok();
+          showGoalReachedModal();
+          return;
+        }
         if (!s.queue.length) endSession();
         else nextCard();
       }, 380);
@@ -1200,6 +1248,41 @@
       s.awaiting = false;
       toast(T('errOffline'));
     }
+  }
+
+  // daily goal reached → announce it with two options: continue or exit
+  function showGoalReachedModal() {
+    const s = state.session;
+    const goal = Math.max(1, state.dailyGoal || 20);
+    openModal(`
+      <div class="goal-modal">
+        <div class="gm-emoji">🎉</div>
+        <h3>${esc(T('goalReachedTitle'))}</h3>
+        <p class="gm-sub">${esc(T('goalReachedMsg', { n: Math.min(goal, state.todayCount || goal) }))}</p>
+        <div class="gm-badges">
+          <span class="gm-badge">🔥 ${esc(T('goalReachedStreak', { n: state.streak || 1 }))}</span>
+          <span class="gm-badge">✓ ${esc(T('sumRight'))} ${s ? s.correct : 0}</span>
+        </div>
+        <div class="row">
+          <button class="btn btn-secondary" data-x="exit">${esc(T('goalExit'))}</button>
+          <button class="btn btn-primary" data-x="continue">${esc(T('goalContinue'))}</button>
+        </div>
+      </div>`, (root) => {
+      root.querySelector('[data-x="continue"]').onclick = () => {
+        Haptic.tap();
+        closeModal();
+        const ses = state.session;
+        if (!ses) { loadHome(); return; }
+        ses.awaiting = false;
+        if (!ses.queue.length) endSession();
+        else nextCard();
+      };
+      root.querySelector('[data-x="exit"]').onclick = () => {
+        Haptic.tap();
+        closeModal();
+        endSession();
+      };
+    });
   }
 
   async function endSession() {
@@ -1234,11 +1317,108 @@
     loadHomeSilently();
   }
 
+  // ================= ONBOARDING GUIDE =================
+  // Shown automatically on the very first visit; re-openable from Settings.
+  const GUIDE_STEPS = [
+    { e: '🃏', t: 'g1t', d: 'g1d' },
+    { e: '✍️', t: 'g2t', d: 'g2d' },
+    { e: '⚡', t: 'g3t', d: 'g3d' },
+    { e: '🔥', t: 'g4t', d: 'g4d' },
+    { e: '🔐', t: 'g5t', d: 'g5d' },
+  ];
+
+  function showGuide(firstRun = false) {
+    let step = 0;
+
+    const render = (root) => {
+      const s = GUIDE_STEPS[step];
+      root.querySelector('.guide-emoji').textContent = s.e;
+      root.querySelector('#guide-title').textContent = T(s.t);
+      root.querySelector('#guide-text').textContent = T(s.d);
+      root.querySelector('#guide-dots').innerHTML =
+        GUIDE_STEPS.map((_, i) => `<i class="${i === step ? 'on' : ''}"></i>`).join('');
+      const next = root.querySelector('#guide-next');
+      const skip = root.querySelector('#guide-skip');
+      next.textContent = step === GUIDE_STEPS.length - 1 ? T('guideStart') : T('guideNext');
+      skip.textContent = step === GUIDE_STEPS.length - 1 ? '' : T('guideSkip');
+      skip.hidden = step === GUIDE_STEPS.length - 1;
+      next.onclick = () => {
+        Haptic.tap();
+        if (step < GUIDE_STEPS.length - 1) { step++; render(root); return; }
+        finish();
+      };
+    };
+
+    const finish = () => {
+      closeModal();
+      if (firstRun && !state.onboarded) {
+        state.onboarded = true;
+        saveSettings({ onboarded: 1 });
+      }
+    };
+
+    openModal(`
+      <div class="guide-modal">
+        <div class="guide-emoji">🃏</div>
+        <div class="guide-step">
+          <h4 id="guide-title"></h4>
+          <p id="guide-text"></p>
+        </div>
+        <div class="guide-dots" id="guide-dots"></div>
+        <div class="row">
+          <button class="btn btn-secondary" id="guide-skip"></button>
+          <button class="btn btn-primary" id="guide-next"></button>
+        </div>
+      </div>`, (root) => {
+      root.querySelector('#guide-skip').onclick = () => { Haptic.tap(); finish(); };
+      render(root);
+    });
+  }
+
+  // ================= LEGAL MODALS =================
+  function legalModal(kind) {
+    const key = kind === 'privacy' ? 'legalPrivacyText' : kind === 'terms' ? 'legalTermsText' : 'legalSupportText';
+    const title = kind === 'privacy' ? T('legalPrivacyBtn') : kind === 'terms' ? T('legalTermsBtn') : T('legalSupportBtn');
+    openModal(`
+      <h3>${esc(title)}</h3>
+      <div class="legal-modal-text" dir="auto">${esc(T(key))}</div>
+      ${kind === 'support' ? `
+      <button class="btn btn-primary btn-wide" id="legal-open-support">💬 ${esc(T('legalSupportOpen'))}</button>` : ''}
+      <div class="row">
+        <button class="btn btn-secondary" data-x="close">${esc(T('cancel'))}</button>
+      </div>`, (root) => {
+      const openBtn = root.querySelector('#legal-open-support');
+      if (openBtn) {
+        openBtn.onclick = () => {
+          try { tg?.openTelegramLink?.('https://t.me/Botmaker_Telegram'); } catch { window.open('https://t.me/Botmaker_Telegram', '_blank'); }
+        };
+      }
+      root.querySelector('[data-x="close"]').onclick = closeModal;
+    });
+  }
+
+  async function deleteMyDataFlow() {
+    if (!(await confirmDialog(T('deleteDataQ')))) return;
+    try {
+      await api('deleteMyData');
+      toast(T('legalDeleted'));
+      setTimeout(() => location.reload(), 900);
+    } catch (e) {
+      toast(T('errGeneric'));
+    }
+  }
+
   // ================= SETTINGS =================
   function renderSettings() {
     $$('#seg-lang button').forEach((b) => b.classList.toggle('active', b.dataset.lang === state.lang));
     $$('#seg-theme button').forEach((b) => b.classList.toggle('active', b.dataset.theme === state.theme));
     $$('#seg-goal button').forEach((b) => b.classList.toggle('active', Number(b.dataset.goal) === Number(state.dailyGoal)));
+    // font sliders
+    const uiR = $('#rng-ui-font'), cardR = $('#rng-card-font');
+    if (uiR) uiR.value = String(state.uiFont || 1);
+    if (cardR) cardR.value = String(state.cardFont || 1);
+    $('#fs-ui-val').textContent = `${Math.round((Number(state.uiFont) || 1) * 100)}%`;
+    $('#fs-card-val').textContent = `${Math.round((Number(state.cardFont) || 1) * 100)}%`;
     $('#opt-house1').classList.toggle('selected', state.failBehavior === 'house1');
     $('#opt-house1').querySelector('input').checked = state.failBehavior === 'house1';
     $('#opt-previous').classList.toggle('selected', state.failBehavior === 'previous');
@@ -1253,9 +1433,13 @@
         state.theme = res.user.theme || state.theme;
         state.failBehavior = res.user.failBehavior || state.failBehavior;
         if (res.user.dailyGoal != null) state.dailyGoal = res.user.dailyGoal;
+        if (res.user.uiFont != null) state.uiFont = Number(res.user.uiFont) || 1;
+        if (res.user.cardFont != null) state.cardFont = Number(res.user.cardFont) || 1;
+        if (res.user.onboarded != null) state.onboarded = Boolean(res.user.onboarded);
       }
       applyLang();
       applyTheme();
+      applyFonts();
       renderSettings();
       return true;
     } catch (e) {
@@ -1424,6 +1608,39 @@
         toast(T('failSaved'));
       };
     });
+
+    // --- font size sliders (live preview, saved on release) ---
+    const uiR = $('#rng-ui-font'), cardR = $('#rng-card-font');
+    if (uiR) {
+      uiR.addEventListener('input', () => {
+        state.uiFont = Number(uiR.value);
+        $('#fs-ui-val').textContent = `${Math.round(state.uiFont * 100)}%`;
+        applyFonts();
+      });
+      uiR.addEventListener('change', async () => {
+        await saveSettings({ uiFont: state.uiFont });
+        toast(T('fontSaved'));
+      });
+    }
+    if (cardR) {
+      cardR.addEventListener('input', () => {
+        state.cardFont = Number(cardR.value);
+        $('#fs-card-val').textContent = `${Math.round(state.cardFont * 100)}%`;
+        applyFonts();
+      });
+      cardR.addEventListener('change', async () => {
+        await saveSettings({ cardFont: state.cardFont });
+        toast(T('fontSaved'));
+      });
+    }
+
+    // --- guide + legal ---
+    $('#btn-guide').onclick = () => { Haptic.tap(); showGuide(false); };
+    $('#btn-legal-privacy').onclick = () => { Haptic.tap(); legalModal('privacy'); };
+    $('#btn-legal-terms').onclick = () => { Haptic.tap(); legalModal('terms'); };
+    $('#btn-legal-support').onclick = () => { Haptic.tap(); legalModal('support'); };
+    $('#btn-delete-data').onclick = () => { Haptic.tap(); deleteMyDataFlow(); };
+
     $('#btn-backup').onclick = doBackup;
 
     // telegram back button

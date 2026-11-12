@@ -15,6 +15,11 @@ const EN_COMMANDS = [
   { command: 'stats', description: 'Show your learning stats' },
   { command: 'lang', description: 'Change language (English / فارسی)' },
   { command: 'help', description: 'Full guide & file formats' },
+  { command: 'privacy', description: 'Privacy policy — what data is stored' },
+  { command: 'terms', description: 'Terms of service' },
+  { command: 'support', description: 'Contact support' },
+  { command: 'paysupport', description: 'Payment support (no payments today)' },
+  { command: 'delete_my_data', description: 'Delete all my data permanently' },
 ];
 const FA_COMMANDS = [
   { command: 'open', description: 'باز کردن مینی‌اپ فلش‌کارت' },
@@ -23,6 +28,11 @@ const FA_COMMANDS = [
   { command: 'stats', description: 'نمایش آمار یادگیری' },
   { command: 'lang', description: 'تغییر زبان (فارسی / English)' },
   { command: 'help', description: 'راهنمای کامل و فرمت فایل‌ها' },
+  { command: 'privacy', description: 'سیاست حفظ حریم خصوصی' },
+  { command: 'terms', description: 'شرایط استفاده' },
+  { command: 'support', description: 'تماس با پشتیبانی' },
+  { command: 'paysupport', description: 'پشتیبانی پرداخت (در حال حاضر پرداختی وجود ندارد)' },
+  { command: 'delete_my_data', description: 'حذف کامل داده‌های من' },
 ];
 
 export default async function () {
@@ -33,7 +43,7 @@ export default async function () {
     menu_button: { type: 'web_app', text: '🃏 FlashCards', web_app: { url: APP_URL } },
   });
   results.descEn = await api.setMyDescription({
-    description: 'Spaced-repetition flashcards — build decks, import files, study right in Telegram. Leitner boxes + adaptive intervals.',
+    description: 'Spaced-repetition flashcards — build decks, import files, study right in Telegram. FSRS-6 scheduling, daily goals & streaks.',
   });
   results.descFa = await api.setMyDescription({
     description: 'فلش‌کارت با مرور فاصله‌دار — ساخت دسته، ایمپورت فایل و مرور هوشمند بر پایهٔ جعبهٔ لایتنر و فاصله‌های تطبیقی.',

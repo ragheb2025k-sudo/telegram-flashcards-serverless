@@ -12,6 +12,9 @@ export const users = table('users', {
   theme: text('theme').notNull().default('auto'),         // 'light' | 'dark' | 'auto'
   failBehavior: text('fail_behavior').notNull().default('house1'), // 'house1' | 'previous'
   dailyGoal: integer('daily_goal').notNull().default(20), // cards/day that ticks the daily chain
+  uiFont: real('ui_font').notNull().default(1),           // UI/menu font scale (0.8 .. 1.6, 1 = default)
+  cardFont: real('card_font').notNull().default(1),       // flashcard text font scale (0.8 .. 1.8, 1 = default)
+  onboarded: integer('onboarded').notNull().default(0),   // 1 = first-run guide has been shown
   streak: integer('streak').notNull().default(0),         // consecutive days the DAILY GOAL was met
   lastStudyDate: text('last_study_date'),                 // 'YYYY-MM-DD' (UTC) of last answered card
   lastGoalDate: text('last_goal_date'),                   // 'YYYY-MM-DD' (UTC) of last goal-hit day

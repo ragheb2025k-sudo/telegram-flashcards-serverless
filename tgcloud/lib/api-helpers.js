@@ -15,6 +15,12 @@ export function requireUser(ctx) {
   if (!user || !user.id) {
     throw new EndpointError('Not authenticated', { code: 'UNAUTHORIZED' });
   }
+  // Anti-replay: reject initData older than 24h (Telegram signs auth_date).
+  // If the platform does not surface auth_date, the check is skipped.
+  const authDate = Number(ctx?.initData?.auth_date);
+  if (authDate > 0 && Math.floor(Date.now() / 1000) - authDate > 86400) {
+    throw new EndpointError('Session expired — reopen the Mini App', { code: 'STALE_INITDATA' });
+  }
   return user;
 }
 

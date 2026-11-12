@@ -6,8 +6,9 @@
   <meta name="color-scheme" content="light dark">
   <title>FlashCards · فلش‌کارت</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <!-- Vazirmatn is self-hosted (app/fonts/) — no external font CDN, no IP leaks -->
+  <link rel="preload" href="fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -230,6 +231,25 @@
         </div>
 
         <div class="settings-group card">
+          <h3 data-t="setFonts">Font size</h3>
+          <p class="settings-hint" data-t="fontsHint"></p>
+          <div class="font-slider">
+            <div class="fs-row">
+              <span data-t="fontUi">Menu & UI font</span>
+              <b id="fs-ui-val">100%</b>
+            </div>
+            <input type="range" id="rng-ui-font" min="0.85" max="1.35" step="0.05" aria-label="UI font size">
+          </div>
+          <div class="font-slider">
+            <div class="fs-row">
+              <span data-t="fontCard">Flashcard font</span>
+              <b id="fs-card-val">100%</b>
+            </div>
+            <input type="range" id="rng-card-font" min="0.8" max="1.8" step="0.05" aria-label="Card font size">
+          </div>
+        </div>
+
+        <div class="settings-group card">
           <h3 data-t="setFail">Missed card goes to…</h3>
           <label class="radio-card" id="opt-house1">
             <input type="radio" name="failBehavior" value="house1">
@@ -260,7 +280,30 @@
 
         <div class="settings-group card">
           <h3 data-t="setSrs">Review schedule</h3>
-          <p class="settings-hint" data-t="srsHint">Cards move through 5 houses. Correct answers promote a card (longer intervals: 1 → 3 → 7 → 16 → 35 days); a missed card comes back in 10 minutes and drops houses based on your setting above. Each card also carries an adaptive difficulty (ease) factor, SM-2 style.</p>
+          <p class="settings-hint" data-t="srsHint"></p>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setGuide">Help</h3>
+          <p class="settings-hint" data-t="guideHint"></p>
+          <button class="btn btn-secondary btn-wide" id="btn-guide">
+            📖 <span data-t="guideBtn">Show the guide again</span>
+          </button>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setLegal">Legal & privacy</h3>
+          <div class="legal-links">
+            <button class="legal-link" id="btn-legal-privacy">🔐 <span data-t="legalPrivacyBtn">Privacy Policy</span></button>
+            <button class="legal-link" id="btn-legal-terms">📜 <span data-t="legalTermsBtn">Terms of Service</span></button>
+            <button class="legal-link" id="btn-legal-support">💬 <span data-t="legalSupportBtn">Support</span></button>
+          </div>
+          <button class="btn btn-secondary btn-wide danger-text" id="btn-delete-data">
+            🗑️ <span data-t="legalDeleteBtn">Delete all my data</span>
+          </button>
+          <p class="legal-footer">
+            <span data-t="legalMadeBy">Made by</span> <b>Botmaker Telegram</b> · <a href="https://t.me/Botmaker_Telegram" id="legal-tg" target="_blank" rel="noopener">@Botmaker_Telegram</a> · <span dir="ltr">ragheb2025k@gmail.com</span>
+          </p>
         </div>
       </section>
     </main>

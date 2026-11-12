@@ -13,7 +13,7 @@ export default async function (input, ctx) {
   const user = await requireAccount(ctx);
   const userId = user.tgId;
   const now = Math.floor(Date.now() / 1000);  // where-clause params use raw unix seconds
-  const limit = Math.min(50, Math.max(1, parseInt(input?.limit, 10) || 20));
+  const limit = Math.min(200, Math.max(1, parseInt(input?.limit, 10) || 20));
   const ahead = Boolean(input?.ahead);
 
   let deckId = null;

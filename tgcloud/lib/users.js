@@ -12,6 +12,9 @@ export const FAIL_BEHAVIORS = ['house1', 'previous'];
 export const GOAL_MIN = 1;
 export const GOAL_MAX = 500;
 export const DEFAULT_GOAL = 20;
+export const FONT_MIN = 0.8;
+export const FONT_MAX = 1.8;
+export const FONT_DEFAULT = 1;
 
 // Fetch (or lazily create) the account row for a Telegram user.
 export async function ensureUser(from) {
@@ -36,6 +39,13 @@ export function normalizeSettings(patch = {}) {
     const n = Number(patch.dailyGoal);
     if (Number.isFinite(n)) out.dailyGoal = Math.min(GOAL_MAX, Math.max(GOAL_MIN, Math.round(n)));
   }
+  for (const k of ['uiFont', 'cardFont']) {
+    if (patch[k] != null && patch[k] !== '') {
+      const n = Number(patch[k]);
+      if (Number.isFinite(n)) out[k] = Math.round(Math.min(FONT_MAX, Math.max(FONT_MIN, n)) * 100) / 100;
+    }
+  }
+  if (patch.onboarded != null) out.onboarded = patch.onboarded ? 1 : 0;
   return out;
 }
 
@@ -45,6 +55,9 @@ export function settingsView(row) {
     theme: row.theme,
     failBehavior: row.failBehavior,
     dailyGoal: row.dailyGoal ?? DEFAULT_GOAL,
+    uiFont: Number(row.uiFont) || FONT_DEFAULT,
+    cardFont: Number(row.cardFont) || FONT_DEFAULT,
+    onboarded: Boolean(row.onboarded),
     streak: row.streak,
     todayCount: row.todayCount ?? 0,
     goalJustMet: false,

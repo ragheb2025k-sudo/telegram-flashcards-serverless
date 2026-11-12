@@ -7,9 +7,10 @@
 // ---------------------------------------------------------------------------
 import { api, BotApiError, InputFile } from 'sdk';
 import { ensureUser, saveUserSettings, userStats } from '../lib/users.js';
-import { t, esc, openKeyboard, langKeyboard } from '../lib/i18n.js';
+import { t, esc, openKeyboard, langKeyboard, supportKeyboard, deleteConfirmKeyboard } from '../lib/i18n.js';
 import { parseImportFile } from '../lib/parse.js';
 import { loadAccount, buildBackupZip, restoreFromBytes } from '../lib/backup.js';
+import { allow } from '../lib/ratelimit.js';
 import { db } from 'sdk';
 import { eq, and } from 'sdk/db';
 import { decks, cards } from '../schema.js';
@@ -166,6 +167,13 @@ export default async function (message) {
   const chatId = message.chat.id;
   const text = message.text || '';
 
+  // --- anti-flood: per-user throttle (30 msgs/min; documents are heavier → 6/min)
+  const heavy = Boolean(message.document);
+  if (!allow(from.id, heavy ? 6 : 30, 60_000)) {
+    try { await api.sendMessage({ chat_id: chatId, text: t(lang, 'rateLimited') }); } catch { /* ignore */ }
+    return;
+  }
+
   try {
     // ----- commands -------------------------------------------------------
     if (OPEN_RE.test(text.trim())) {
@@ -190,15 +198,57 @@ export default async function (message) {
       return;
     }
     if (/^\/backup(@\w+)?$/i.test(text)) {
+      // personal data file → private chats only (Gate 2.2.3)
+      if (message.chat.type !== 'private') {
+        await api.sendMessage({ chat_id: chatId, text: t(lang, 'privateOnly') });
+        return;
+      }
       await sendBackup(user, chatId);
       return;
     }
     if (/^\/stats(@\w+)?$/i.test(text)) {
+      // personal data → private chats only (Gate 2.2.3)
+      if (message.chat.type !== 'private') {
+        await api.sendMessage({ chat_id: chatId, text: t(lang, 'privateOnly') });
+        return;
+      }
       await sendStats(user, chatId);
       return;
     }
     if (/^\/lang(@\w+)?$/i.test(text)) {
       await api.sendMessage({ chat_id: chatId, text: t(lang, 'chooseLang'), reply_markup: langKeyboard() });
+      return;
+    }
+
+    // ----- Telegram-mandated compliance commands (Gate 5) -------------------
+    if (/^\/privacy(@\w+)?$/i.test(text)) {
+      await api.sendMessage({ chat_id: chatId, text: t(lang, 'privacy'), parse_mode: 'HTML' });
+      return;
+    }
+    if (/^\/terms(@\w+)?$/i.test(text)) {
+      await api.sendMessage({ chat_id: chatId, text: t(lang, 'terms'), parse_mode: 'HTML' });
+      return;
+    }
+    if (/^\/support(@\w+)?$/i.test(text)) {
+      await api.sendMessage({
+        chat_id: chatId,
+        text: t(lang, 'support'),
+        parse_mode: 'HTML',
+        reply_markup: supportKeyboard(lang),
+      });
+      return;
+    }
+    if (/^\/paysupport(@\w+)?$/i.test(text)) {
+      await api.sendMessage({ chat_id: chatId, text: t(lang, 'paySupport'), parse_mode: 'HTML' });
+      return;
+    }
+    if (/^\/delete_my_data(@\w+)?$/i.test(text)) {
+      await api.sendMessage({
+        chat_id: chatId,
+        text: t(lang, 'deleteConfirm'),
+        parse_mode: 'HTML',
+        reply_markup: deleteConfirmKeyboard(lang),
+      });
       return;
     }
 
