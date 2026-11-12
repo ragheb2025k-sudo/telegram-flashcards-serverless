@@ -9,6 +9,9 @@ import { detectLang } from './i18n.js';
 export const LANGS = ['fa', 'en'];
 export const THEMES = ['light', 'dark', 'auto'];
 export const FAIL_BEHAVIORS = ['house1', 'previous'];
+export const GOAL_MIN = 1;
+export const GOAL_MAX = 500;
+export const DEFAULT_GOAL = 20;
 
 // Fetch (or lazily create) the account row for a Telegram user.
 export async function ensureUser(from) {
@@ -29,7 +32,23 @@ export function normalizeSettings(patch = {}) {
   if (LANGS.includes(patch.lang)) out.lang = patch.lang;
   if (THEMES.includes(patch.theme)) out.theme = patch.theme;
   if (FAIL_BEHAVIORS.includes(patch.failBehavior)) out.failBehavior = patch.failBehavior;
+  if (patch.dailyGoal != null && patch.dailyGoal !== '') {
+    const n = Number(patch.dailyGoal);
+    if (Number.isFinite(n)) out.dailyGoal = Math.min(GOAL_MAX, Math.max(GOAL_MIN, Math.round(n)));
+  }
   return out;
+}
+
+export function settingsView(row) {
+  return {
+    lang: row.lang,
+    theme: row.theme,
+    failBehavior: row.failBehavior,
+    dailyGoal: row.dailyGoal ?? DEFAULT_GOAL,
+    streak: row.streak,
+    todayCount: row.todayCount ?? 0,
+    goalJustMet: false,
+  };
 }
 
 export async function saveUserSettings(tgId, patch) {

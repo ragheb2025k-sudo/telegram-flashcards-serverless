@@ -40,12 +40,22 @@ export default async function (input, ctx) {
     mastered: acc.mastered + d.mastered,
   }), { cards: 0, due: 0, mastered: 0 });
 
+  // daily goal / streak state (dates are UTC 'YYYY-MM-DD')
+  const today = new Date().toISOString().slice(0, 10);
+  const todayCount = user.todayDate === today ? (user.todayCount || 0) : 0;
+  const goalLog = String(user.goalLog || '').split(',').filter(Boolean);
+
   return {
     user: {
       lang: user.lang,
       theme: user.theme,
       failBehavior: user.failBehavior,
       streak: user.streak,
+      dailyGoal: user.dailyGoal ?? 20,
+      todayCount,
+      todayDate: today,
+      lastGoalDate: user.lastGoalDate || null,
+      goalLog,
       firstName: ctx.initData.user.first_name || '',
     },
     totals: { decks: deckStats.length, ...totals },

@@ -11,8 +11,13 @@ export const users = table('users', {
   lang: text('lang').notNull().default('en'),             // 'fa' | 'en'
   theme: text('theme').notNull().default('auto'),         // 'light' | 'dark' | 'auto'
   failBehavior: text('fail_behavior').notNull().default('house1'), // 'house1' | 'previous'
-  streak: integer('streak').notNull().default(0),         // consecutive study days
+  dailyGoal: integer('daily_goal').notNull().default(20), // cards/day that ticks the daily chain
+  streak: integer('streak').notNull().default(0),         // consecutive days the DAILY GOAL was met
   lastStudyDate: text('last_study_date'),                 // 'YYYY-MM-DD' (UTC) of last answered card
+  lastGoalDate: text('last_goal_date'),                   // 'YYYY-MM-DD' (UTC) of last goal-hit day
+  todayDate: text('today_date'),                          // 'YYYY-MM-DD' (UTC) — day of todayCount
+  todayCount: integer('today_count').notNull().default(0),// cards answered today (UTC)
+  goalLog: text('goal_log'),                              // comma-sep 'YYYY-MM-DD' goal-hit days (last 60)
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 }, (t) => ({
   createdIdx: index('idx_users_created').on(t.createdAt),
@@ -30,9 +35,11 @@ export const decks = table('decks', {
 }));
 
 // A single flashcard with its spaced-repetition state.
-// house: 1..5 (Leitner boxes) — 5 = mastered
-// ease:  adaptive multiplier (0.6 .. 1.45), SM-2 inspired
-// due:   unix seconds when the card should be reviewed next
+// stability:  FSRS-6 memory stability S (days at which recall probability ≈ 90%)
+// difficulty: FSRS-6 memory difficulty D (1 = easy .. 10 = hard)
+// house:      1..5, derived from stability (Leitner-style display; 5 = mastered)
+// ease:       legacy SM-2 multiplier (kept for old rows/backups; unused by FSRS)
+// due:        unix seconds when the card should be reviewed next
 export const cards = table('cards', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   deckId: integer('deck_id').notNull(),
@@ -41,6 +48,8 @@ export const cards = table('cards', {
   back: text('back').notNull(),
   house: integer('house').notNull().default(1),
   ease: real('ease').notNull().default(1),
+  stability: real('stability'),                           // FSRS-6 S in days; NULL = never studied with FSRS
+  difficulty: real('difficulty'),                         // FSRS-6 D in [1,10]
   reps: integer('reps').notNull().default(0),
   lapses: integer('lapses').notNull().default(0),
   due: integer('due', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),

@@ -39,7 +39,11 @@
     lang: 'fa',
     theme: 'auto',
     failBehavior: 'house1',
+    dailyGoal: 20,
     streak: 0,
+    todayCount: 0,
+    goalLog: [],
+    lastGoalDate: null,
     firstName: '',
     decks: [],
     totals: { decks: 0, cards: 0, due: 0, mastered: 0 },
@@ -65,21 +69,28 @@
   // ---------------- theme ----------------
   function applyTheme() {
     let dark = false;
+    const inline = document.documentElement.style;
     if (state.theme === 'auto') {
       const tp = tg?.themeParams;
       if (tp && tp.bg_color) {
-        // trust Telegram's theme
+        // trust Telegram's theme and mirror its background
         dark = isDarkColor(tp.bg_color);
-        document.documentElement.style.setProperty('--bg', tp.bg_color);
-        document.documentElement.style.setProperty('--text', tp.text_color || '');
+        inline.setProperty('--bg', tp.bg_color);
+        inline.setProperty('--text', tp.text_color || '');
       } else {
         dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        inline.removeProperty('--bg');
+        inline.removeProperty('--text');
       }
     } else {
+      // explicit light/dark → clear any inline vars injected by Telegram's
+      // auto theme, otherwise they would override the palette below
       dark = state.theme === 'dark';
+      inline.removeProperty('--bg');
+      inline.removeProperty('--text');
     }
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    try { tg?.setHeaderColor?.(dark ? '#171411' : '#f4f1ec'); tg?.setBackgroundColor?.(dark ? '#171411' : '#f4f1ec'); } catch {}
+    try { tg?.setHeaderColor?.(dark ? '#141210' : '#f4f1ec'); tg?.setBackgroundColor?.(dark ? '#141210' : '#f4f1ec'); } catch {}
   }
   function isDarkColor(hex) {
     const m = String(hex).match(/^#?([0-9a-f]{6})$/i);
@@ -112,33 +123,96 @@
     seed() {
       const db = {
         seq: 1,
-        user: { lang: state.lang, theme: state.theme, failBehavior: state.failBehavior, streak: 0, lastStudyDate: null },
+        user: {
+          lang: state.lang, theme: state.theme, failBehavior: state.failBehavior,
+          dailyGoal: 20, streak: 0, lastStudyDate: null,
+          lastGoalDate: null, todayDate: null, todayCount: 0, goalLog: [],
+        },
         decks: [],
       };
       localStorage.setItem(this.KEY, JSON.stringify(db));
       return db;
     },
-    intervals: [0, 1440, 4320, 10080, 23040, 50400],
+    // FSRS-6 compact mirror of tgcloud/lib/srs.js (official default weights)
+    W: [0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722, 0.1666, 0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425, 0.0912, 0.0658, 0.1542],
+    DECAY: -0.1542,
+    FACTOR: Math.pow(0.9, 1 / -0.1542) - 1,
+    clamp(v, lo, hi) { return Math.min(Math.max(v, lo), hi); },
+    intervalDays(s) {
+      const ivl = (s / this.FACTOR) * (Math.pow(0.9, 1 / this.DECAY) - 1);
+      return this.clamp(Math.round(ivl), 1, 36500);
+    },
+    houseOf(s) { return s >= 21 ? 5 : s >= 7 ? 4 : s >= 3 ? 3 : s >= 1 ? 2 : 1; },
     schedule(card, correct, failBehavior) {
       const t = nowSec();
-      if (correct) {
-        card.house = Math.min(5, card.house + 1);
-        card.ease = Math.min(1.45, card.ease + 0.06);
-        card.due = t + Math.round(this.intervals[card.house] * 60 * card.ease);
-        card.reps++; card.lastResult = 1;
-        return 'up';
+      const g = correct ? 3 : 1;
+      const W = this.W;
+      let S = card.stability ?? null;
+      let D = card.difficulty ?? null;
+      const studied = card.reps > 0 || card.lapses > 0;
+      if (studied && (S == null || D == null)) {
+        S = [0, 1, 3, 7, 16, 35][Math.min(5, card.house || 1)] || 1;
+        D = this.clamp(7 - 0.6 * (card.house || 1), 1, 10);
       }
-      card.house = failBehavior === 'previous' ? Math.max(1, card.house - 1) : 1;
-      card.ease = Math.max(0.6, card.ease - 0.2);
-      card.due = t + 600;
-      card.lapses++; card.lastResult = 0;
-      return 'down';
+      if (!studied || S == null || D == null) {
+        S = Math.max(W[g - 1], 0.001);
+        D = this.clamp(W[4] - Math.exp(W[5] * (g - 1)) + 1, 1, 10);
+      } else {
+        const elapsed = card.lastReview ? Math.max(0, t - card.lastReview) : 0;
+        if (elapsed < 86400) {
+          // same-day short-term path
+          let inc = Math.exp(W[17] * (g - 3 + W[18])) * Math.pow(S, -W[19]);
+          if (g >= 3) inc = Math.max(inc, 1);
+          S = this.clamp(S * inc, 0.001, 36500);
+        } else {
+          const r = Math.pow(1 + this.FACTOR * elapsed / 86400 / S, this.DECAY);
+          if (g === 1) {
+            S = Math.min(
+              W[11] * Math.pow(D, -W[12]) * (Math.pow(S + 1, W[13]) - 1) * Math.exp((1 - r) * W[14]),
+              S / Math.exp(W[17] * W[18])
+            );
+            if (failBehavior === 'house1') S = Math.max(W[0], 0.001);
+          } else {
+            S = S * (1 + Math.exp(W[8]) * (11 - D) * Math.pow(S, -W[9]) * (Math.exp((1 - r) * W[10]) - 1));
+          }
+          S = this.clamp(S, 0.001, 36500);
+        }
+        // difficulty update: linear damping + mean reversion
+        const dInit = this.clamp(W[4] - Math.exp(W[5] * 3) + 1, 1, 10);
+        const damped = D + ((10 - D) * (-W[6] * (g - 3))) / 9;
+        D = this.clamp(W[7] * dInit + (1 - W[7]) * damped, 1, 10);
+      }
+      const oldHouse = card.house || 1;
+      card.stability = S;
+      card.difficulty = D;
+      card.house = this.houseOf(S);
+      card.due = correct ? t + this.intervalDays(S) * 86400 : t + 600;
+      card.lastReview = t;
+      if (correct) card.reps++; else card.lapses++;
+      card.lastResult = correct ? 1 : 0;
+      return card.house > oldHouse ? 'up' : card.house < oldHouse ? 'down' : 'stayed';
+    },
+    goalPatch(db, res) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (db.user.todayDate !== today) { db.user.todayDate = today; db.user.todayCount = 0; }
+      db.user.todayCount = (db.user.todayCount || 0) + 1;
+      const goal = Math.max(1, db.user.dailyGoal || 20);
+      if (db.user.todayCount >= goal && db.user.lastGoalDate !== today) {
+        const y = new Date(Date.now() - DAY * 1000).toISOString().slice(0, 10);
+        db.user.streak = db.user.lastGoalDate === y ? (db.user.streak || 0) + 1 : 1;
+        db.user.lastGoalDate = today;
+        db.user.goalLog = [...(db.user.goalLog || []), today].slice(-60);
+        if (res) res.goalJustMet = true;
+      }
+      if (res) { res.todayCount = db.user.todayCount; res.dailyGoal = goal; }
     },
     handle(name, input = {}) {
       const db = this.load();
       let res = {};
       switch (name) {
         case 'getHome': {
+          const today = new Date().toISOString().slice(0, 10);
+          const tc = db.user.todayDate === today ? (db.user.todayCount || 0) : 0;
           const decks = db.decks.map((d) => ({
             id: d.id, name: d.name, emoji: d.emoji,
             cards: d.cards.length,
@@ -147,7 +221,7 @@
             fresh: d.cards.filter((c) => c.reps === 0 && c.lapses === 0).length,
           }));
           res = {
-            user: { ...db.user, firstName: '' },
+            user: { ...db.user, goalLog: db.user.goalLog || [], todayCount: tc, todayDate: today, firstName: '' },
             totals: {
               decks: decks.length,
               cards: decks.reduce((a, d) => a + d.cards, 0),
@@ -219,7 +293,7 @@
         }
         case 'resetDeckProgress': {
           const d = db.decks.find((x) => x.id === input.deckId);
-          if (d) d.cards.forEach((c) => { c.house = 1; c.ease = 1; c.reps = 0; c.lapses = 0; c.lastResult = null; c.due = nowSec(); c.isNew = true; });
+          if (d) d.cards.forEach((c) => { c.house = 1; c.ease = 1; c.stability = null; c.difficulty = null; c.reps = 0; c.lapses = 0; c.lastResult = null; c.lastReview = null; c.due = nowSec(); c.isNew = true; });
           res = { ok: true };
           break;
         }
@@ -241,13 +315,9 @@
             const c = d.cards.find((x) => x.id === input.cardId);
             if (c) {
               const moved = this.schedule(c, !!input.correct, db.user.failBehavior);
-              const today = new Date().toISOString().slice(0, 10);
-              if (db.user.lastStudyDate !== today) {
-                const y = new Date(Date.now() - DAY * 1000).toISOString().slice(0, 10);
-                db.user.streak = db.user.lastStudyDate === y ? (db.user.streak || 0) + 1 : 1;
-                db.user.lastStudyDate = today;
-              }
-              res = { card: { ...c, isNew: false }, moved, requeue: !input.correct, nextDue: c.due, streak: db.user.streak };
+              res = { card: { ...c, isNew: false }, moved, requeue: !input.correct, nextDue: c.due, streak: db.user.streak || 0 };
+              this.goalPatch(db, res);
+              res.streak = db.user.streak || 0;
               break;
           }
           }
@@ -257,7 +327,11 @@
           if (input.lang) db.user.lang = input.lang;
           if (input.theme) db.user.theme = input.theme;
           if (input.failBehavior) db.user.failBehavior = input.failBehavior;
-          res = { user: { ...db.user } };
+          if (input.dailyGoal != null && input.dailyGoal !== '') {
+            const n = Number(input.dailyGoal);
+            if (Number.isFinite(n)) db.user.dailyGoal = Math.min(500, Math.max(1, Math.round(n)));
+          }
+          res = { user: { ...db.user, goalLog: db.user.goalLog || [] } };
           break;
         }
         case 'createBackup': {
@@ -353,7 +427,7 @@
     const canBack = ['deck', 'settings', 'summary'].includes(screen);
     $('#btn-back').classList.toggle('hidden', !canBack);
     try {
-      if (canBack) tg?.BackButton?.show(); else tg?.BackButton?.hide();
+      if (canBack || screen === 'review') tg?.BackButton?.show(); else tg?.BackButton?.hide();
     } catch {}
     if (screen !== 'review') state.session = null;
     window.scrollTo({ top: 0 });
@@ -367,6 +441,10 @@
       state.theme = data.user.theme || state.theme;
       state.failBehavior = data.user.failBehavior || state.failBehavior;
       state.streak = data.user.streak || 0;
+      state.dailyGoal = data.user.dailyGoal || 20;
+      state.todayCount = data.user.todayCount || 0;
+      state.goalLog = Array.isArray(data.user.goalLog) ? data.user.goalLog : [];
+      state.lastGoalDate = data.user.lastGoalDate || null;
       state.firstName = data.user.firstName || '';
       state.decks = data.decks || [];
       state.totals = data.totals || { decks: 0, cards: 0, due: 0, mastered: 0 };
@@ -387,8 +465,8 @@
     $('#home-sub').textContent = T('heroSub');
 
     const chip = $('#streak-chip');
-    chip.hidden = !state.streak;
-    $('#streak-val').textContent = state.streak;
+    chip.hidden = false;
+    $('#streak-val').textContent = state.streak || 0;
 
     // review-all button
     const btnAll = $('#btn-review-all');
@@ -405,6 +483,8 @@
       <div class="stat-box"><b>${state.totals.cards}</b><span>${T('statCards')}</span></div>
       <div class="stat-box hot"><b>${state.totals.due}</b><span>${T('statDue')}</span></div>
       <div class="stat-box"><b>${state.totals.mastered}</b><span>${T('statMastered')}</span></div>`;
+
+    renderGoal();
 
     // decks
     const list = $('#deck-list');
@@ -424,6 +504,43 @@
     $('#home-empty').hidden = state.decks.length > 0;
     if (!state.decks.length) $('#home-empty-text').textContent = T('emptyHome');
     $('#boot').classList.add('done');
+  }
+
+  // ---------- daily goal / streak chain ----------
+  const WD_FA = ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'];  // JS getDay: 0=Sun … 6=Sat
+  const WD_EN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const RING_C = 113.1;  // circumference of r=18 circle
+
+  function renderGoal() {
+    const goal = Math.max(1, state.dailyGoal || 20);
+    const done = Math.min(state.todayCount || 0, goal);
+    const pct = Math.round((done / goal) * 100);
+    $('#ring-fill').style.strokeDashoffset = String(RING_C - (RING_C * done) / goal);
+    $('#ring-text').textContent = `${pct}%`;
+    document.querySelector('.goal-ring').classList.toggle('done', done >= goal);
+    $('#goal-streak').textContent = state.streak || 0;
+    const status = $('#goal-status');
+    if (done >= goal) status.textContent = T('goalDone');
+    else if (done > 0) status.textContent = T('goalLeft', { n: goal - done });
+    else status.textContent = T('goalToday', { done: 0, goal });
+
+    // last 7 days chain — ✓ for days the goal was met
+    const logSet = new Set(state.goalLog || []);
+    const wd = state.lang === 'fa' ? WD_FA : WD_EN;
+    const today = new Date().toISOString().slice(0, 10);
+    let out = '';
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * DAY * 1000);
+      const ds = d.toISOString().slice(0, 10);
+      const isToday = ds === today;
+      const isDone = logSet.has(ds) || (isToday && done >= goal);
+      const label = isToday ? T('weekToday') : wd[d.getUTCDay()];
+      let dot = '·';
+      if (isDone) dot = '✓';
+      else if (isToday && (state.todayCount || 0) > 0) dot = String(state.todayCount);
+      out += `<div class="week-day${isToday ? ' today' : ''}${isDone ? ' done' : ''}"><span class="dot">${dot}</span><small>${esc(label)}</small></div>`;
+    }
+    $('#week-row').innerHTML = out;
   }
 
   // ================= DECK =================
@@ -587,6 +704,11 @@
       state.decks = data.decks;
       state.totals = data.totals;
       state.streak = data.user.streak || state.streak;
+      state.dailyGoal = data.user.dailyGoal || state.dailyGoal;
+      state.todayCount = data.user.todayCount || 0;
+      state.goalLog = Array.isArray(data.user.goalLog) ? data.user.goalLog : state.goalLog;
+      state.lastGoalDate = data.user.lastGoalDate || state.lastGoalDate;
+      renderGoal();
     } catch {}
   }
 
@@ -1015,7 +1137,10 @@
     const s = state.session;
     const c = s.current;
     const fc = $('#flashcard');
-    fc.classList.remove('flipped', 'pulse-ok', 'pulse-no');
+    fc.classList.remove('flipped', 'pulse-ok', 'pulse-no', 'dragging', 'snap-back', 'fly-off');
+    fc.style.transform = '';
+    $('#badge-right').style.opacity = 0;
+    $('#badge-left').style.opacity = 0;
     $('#card-front').textContent = c.front;
     $('#card-back').textContent = c.back;
     $('#label-front').textContent = T('question');
@@ -1041,6 +1166,8 @@
     s.awaiting = true;
     const card = s.current;
     const fc = $('#flashcard');
+    fc.classList.remove('dragging', 'snap-back');
+    fc.style.transform = '';
     fc.classList.add(correct ? 'pulse-ok' : 'pulse-no');
     correct ? Haptic.ok() : Haptic.no();
 
@@ -1048,7 +1175,13 @@
       const res = await api('answerCard', { cardId: card.id, correct });
       s.done++;
       correct ? s.correct++ : s.wrong++;
-      if (res.streak) state.streak = res.streak;
+      if (res.streak != null) state.streak = res.streak;
+      if (res.todayCount != null) state.todayCount = res.todayCount;
+      if (res.dailyGoal != null) state.dailyGoal = res.dailyGoal;
+      if (res.goalJustMet) {
+        toast(T('streakKept'));
+        Haptic.ok();
+      }
 
       // house movement indicator
       const movedKey = res.moved === 'up' ? 'houseMovedUp' : res.moved === 'down' ? 'houseMovedDown' : 'houseStayed';
@@ -1105,6 +1238,7 @@
   function renderSettings() {
     $$('#seg-lang button').forEach((b) => b.classList.toggle('active', b.dataset.lang === state.lang));
     $$('#seg-theme button').forEach((b) => b.classList.toggle('active', b.dataset.theme === state.theme));
+    $$('#seg-goal button').forEach((b) => b.classList.toggle('active', Number(b.dataset.goal) === Number(state.dailyGoal)));
     $('#opt-house1').classList.toggle('selected', state.failBehavior === 'house1');
     $('#opt-house1').querySelector('input').checked = state.failBehavior === 'house1';
     $('#opt-previous').classList.toggle('selected', state.failBehavior === 'previous');
@@ -1118,6 +1252,7 @@
         state.lang = res.user.lang || state.lang;
         state.theme = res.user.theme || state.theme;
         state.failBehavior = res.user.failBehavior || state.failBehavior;
+        if (res.user.dailyGoal != null) state.dailyGoal = res.user.dailyGoal;
       }
       applyLang();
       applyTheme();
@@ -1176,8 +1311,67 @@
     $('#btn-deck-review').onclick = () => startReview(state.currentDeck.id);
 
     // review screen
-    $('#flashcard').onclick = flipCard;
-    $('#flashcard').onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); } };
+    $('#btn-review-home').onclick = () => { Haptic.tap(); loadHome(); };
+
+    // --- Tinder-style swipe on the flashcard ---
+    const fc = $('#flashcard');
+    const badgeR = $('#badge-right');
+    const badgeL = $('#badge-left');
+    let drag = null;
+    let suppressClickUntil = 0;
+
+    fc.addEventListener('pointerdown', (e) => {
+      if (state.screen !== 'review' || !state.session || state.session.awaiting) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, dx: 0, moved: false, t: Date.now() };
+      try { fc.setPointerCapture(e.pointerId); } catch {}
+    });
+    fc.addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      drag.dx = e.clientX - drag.x;
+      if (Math.abs(drag.dx) > 8 || Math.abs(e.clientY - drag.y) > 12) drag.moved = true;
+      if (!drag.moved || !state.session || state.session.awaiting) return;
+      fc.classList.remove('snap-back');
+      fc.classList.add('dragging');
+      fc.style.transform = `translateX(${drag.dx}px) rotate(${drag.dx / 16}deg)`;
+      const op = Math.min(1, Math.abs(drag.dx) / 80);
+      badgeR.style.opacity = drag.dx > 0 ? op : 0;
+      badgeL.style.opacity = drag.dx < 0 ? op : 0;
+    });
+    const endDrag = (e) => {
+      if (!drag || (e.pointerId !== undefined && e.pointerId !== drag.id)) return;
+      const d = drag;
+      drag = null;
+      fc.classList.remove('dragging');
+      badgeR.style.opacity = 0;
+      badgeL.style.opacity = 0;
+      const s = state.session;
+      if (d.moved && Math.abs(d.dx) > 6) suppressClickUntil = Date.now() + 320;
+      const vx = d.dx / Math.max(1, Date.now() - d.t);
+      if (d.moved && s && s.current && !s.awaiting && (Math.abs(d.dx) > 90 || Math.abs(vx) > 0.55)) {
+        const dir = d.dx > 0 ? 1 : -1;
+        fc.classList.add('fly-off');
+        fc.style.transform = `translateX(${dir * (window.innerWidth * 0.75 + 90)}px) rotate(${dir * 22}deg)`;
+        grade(dir > 0);
+        setTimeout(() => { fc.classList.remove('fly-off'); }, 300);
+        return;
+      }
+      if (d.moved && Math.abs(d.dx) > 6) {
+        fc.classList.add('snap-back');
+        fc.style.transform = '';
+        setTimeout(() => fc.classList.remove('snap-back'), 300);
+      }
+    };
+    fc.addEventListener('pointerup', endDrag);
+    fc.addEventListener('pointercancel', endDrag);
+    fc.addEventListener('lostpointercapture', () => { if (drag) endDrag({}); });
+
+    // tap = flip (but not right after a swipe)
+    fc.onclick = () => {
+      if (Date.now() < suppressClickUntil) return;
+      flipCard();
+    };
+    fc.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); } };
     $('#btn-flip').onclick = flipCard;
     $('#btn-wrong').onclick = () => grade(false);
     $('#btn-right').onclick = () => grade(true);
@@ -1185,6 +1379,8 @@
       if (state.screen !== 'review' || !state.session) return;
       if (e.key === '1') grade(false);
       if (e.key === '2') grade(true);
+      if (e.key === 'ArrowRight') grade(true);   // swipe-right equivalent
+      if (e.key === 'ArrowLeft') grade(false);   // swipe-left equivalent
     });
 
     // summary
@@ -1211,6 +1407,15 @@
         toast(T('themeSaved'));
       };
     });
+    $$('#seg-goal button').forEach((b) => {
+      b.onclick = async () => {
+        state.dailyGoal = Number(b.dataset.goal);
+        renderSettings();
+        await saveSettings({ dailyGoal: state.dailyGoal });
+        toast(T('goalSaved'));
+        loadHomeSilently();
+      };
+    });
     ['house1', 'previous'].forEach((v) => {
       $(v === 'house1' ? '#opt-house1' : '#opt-previous').onclick = async () => {
         state.failBehavior = v;
@@ -1224,7 +1429,8 @@
     // telegram back button
     try {
       tg?.BackButton?.onClick(() => {
-        if (state.screen === 'deck' || state.screen === 'settings' || state.screen === 'summary') loadHome();
+        if (state.screen === 'deck' || state.screen === 'settings' || state.screen === 'summary'
+          || state.screen === 'review') loadHome();
       });
     } catch {}
 

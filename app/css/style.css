@@ -3,6 +3,7 @@
    light/dark themes, RTL-aware, Telegram-friendly
    ============================================================ */
 :root {
+  color-scheme: light;
   --bg: #f4f1ec;
   --bg-elev: #ffffff;
   --bg-inset: #ebe7e0;
@@ -23,24 +24,30 @@
   --radius: 16px;
   --radius-sm: 11px;
 }
+/*
+  Dark theme — redesigned for proper contrast & layering:
+  three distinct surfaces (bg → elev → inset), warm-neutral hue family,
+  amber accent tuned for dark backgrounds, brighter good/bad for icons.
+*/
 [data-theme="dark"] {
-  --bg: #171411;
-  --bg-elev: #211d18;
+  color-scheme: dark;
+  --bg: #141210;
+  --bg-elev: #201c17;
   --bg-inset: #2b261f;
-  --text: #efe9e0;
-  --text-dim: #9c9184;
-  --line: #363029;
-  --accent: #f59e0b;          /* amber-500 pops on dark */
-  --accent-strong: #fbbf24;
-  --accent-soft: rgba(245, 158, 11, 0.14);
-  --good: #22c55e;
-  --good-soft: rgba(34, 197, 94, 0.16);
-  --bad: #ef4444;
-  --bad-soft: rgba(239, 68, 68, 0.16);
-  --card-face: #26221c;
-  --card-face-back: #211d18;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, .5);
+  --text: #f0eadd;
+  --text-dim: #a89c8c;
+  --line: #38322a;
+  --accent: #f2a33c;          /* amber-400 range — pops on dark */
+  --accent-strong: #f7bb63;
+  --accent-soft: rgba(242, 163, 60, 0.16);
+  --good: #34d27b;
+  --good-soft: rgba(52, 210, 123, 0.17);
+  --bad: #ef5b5b;
+  --bad-soft: rgba(239, 91, 91, 0.17);
+  --card-face: #241f19;
+  --card-face-back: #1d1915;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, .6);
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -52,6 +59,7 @@ body {
   color: var(--text);
   overscroll-behavior-y: none;
   -webkit-font-smoothing: antialiased;
+  transition: background-color .25s ease, color .25s ease;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 h1, h2, h3, p { margin: 0; }
@@ -140,6 +148,36 @@ h1, h2, h3, p { margin: 0; }
   padding: 7px 12px; border-radius: 999px; font-size: 15px;
   box-shadow: var(--shadow); flex: none;
 }
+
+/* ---------- goal / streak card (Duolingo-style chain) ---------- */
+.goal-card { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; }
+.goal-row { display: flex; align-items: center; gap: 14px; }
+.goal-ring { position: relative; width: 64px; height: 64px; flex: none; }
+.goal-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.goal-ring .ring-bg { fill: none; stroke: var(--bg-inset); stroke-width: 6; }
+.goal-ring .ring-fill {
+  fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round;
+  stroke-dasharray: 113.1; stroke-dashoffset: 113.1;
+  transition: stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1), stroke .3s;
+}
+.goal-ring.done .ring-fill { stroke: var(--good); }
+.ring-text { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.goal-info { flex: 1; min-width: 0; }
+.goal-line { display: flex; align-items: baseline; gap: 7px; font-size: 16px; font-weight: 800; }
+.goal-line .flame { font-size: 19px; align-self: center; }
+.goal-line span:last-child { color: var(--text-dim); font-size: 12.5px; font-weight: 600; }
+.goal-info p { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+.week-row { display: flex; justify-content: space-between; gap: 4px; }
+.week-day { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; min-width: 0; }
+.week-day .dot {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 13px; font-weight: 800;
+  border: 1.5px solid var(--line); color: var(--text-dim); background: var(--bg-inset);
+}
+.week-day.done .dot { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.week-day.today .dot { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.week-day.today.done .dot { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.week-day small { font-size: 10px; color: var(--text-dim); }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -251,12 +289,18 @@ h1, h2, h3, p { margin: 0; }
 
 /* ---------- review ---------- */
 .review-top { display: flex; flex-direction: column; gap: 8px; }
-.progress-track { height: 8px; border-radius: 999px; background: var(--bg-inset); overflow: hidden; }
+.review-bar { display: flex; align-items: center; gap: 8px; }
+#btn-review-home { flex: none; color: var(--text-dim); }
+#btn-review-home:active { color: var(--accent); }
+.progress-track { flex: 1; height: 8px; border-radius: 999px; background: var(--bg-inset); overflow: hidden; }
 .progress-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--accent); transition: width .35s cubic-bezier(.2,.8,.2,1); }
 .review-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); font-weight: 600; }
 
 .flashcard-wrap { flex: 1; display: flex; align-items: center; justify-content: center; perspective: 1600px; min-height: 0; padding: 6px 0; }
-.flashcard { width: 100%; height: min(52dvh, 420px); cursor: pointer; outline: none; }
+.flashcard { position: relative; width: 100%; height: min(52dvh, 420px); cursor: pointer; outline: none; will-change: transform; touch-action: pan-y; }
+.flashcard.dragging { transition: none; }
+.flashcard.snap-back { transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+.flashcard.fly-off { transition: transform .3s ease-in, opacity .3s ease-in; opacity: 0; }
 .flashcard-inner {
   position: relative; width: 100%; height: 100%;
   transform-style: preserve-3d;
@@ -291,10 +335,33 @@ h1, h2, h3, p { margin: 0; }
 @keyframes popok { 0% { transform: scale(1); } 45% { transform: scale(.97); } 100% { transform: scale(1); } }
 @keyframes popno { 0% { transform: translateX(0); } 30% { transform: translateX(-7px); } 60% { transform: translateX(7px); } 100% { transform: translateX(0); } }
 
-.review-actions {
-  display: flex; align-items: center; justify-content: center; gap: 26px;
-  padding: 14px 0 4px;
+/* swipe badges (Tinder-style) */
+.swipe-badge {
+  position: absolute; top: 16px; z-index: 6;
+  padding: 8px 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 800;
+  border: 2.5px solid; opacity: 0; pointer-events: none;
+  transition: opacity .08s linear;
 }
+.swipe-badge.right {
+  inset-inline-end: 16px; transform: rotate(8deg);
+  color: var(--good); border-color: var(--good); background: color-mix(in srgb, var(--good-soft) 80%, transparent);
+}
+.swipe-badge.left {
+  inset-inline-start: 16px; transform: rotate(-8deg);
+  color: var(--bad); border-color: var(--bad); background: color-mix(in srgb, var(--bad-soft) 80%, transparent);
+}
+
+.swipe-hint { font-size: 11.5px; color: var(--text-dim); text-align: center; padding: 0 8px; }
+
+.review-actions {
+  /* keep physical sides constant in both languages: red ✗ = left, green ✓ = right */
+  direction: ltr;
+  display: flex; align-items: flex-start; justify-content: center; gap: 22px;
+  padding: 12px 0 4px;
+}
+.action-group { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 66px; }
+.action-label { font-size: 11px; font-weight: 700; color: var(--text-dim); }
 .action-btn {
   width: 66px; height: 66px; border-radius: 50%;
   display: grid; place-items: center;
@@ -380,6 +447,7 @@ h1, h2, h3, p { margin: 0; }
   animation: fadein .18s ease;
   backdrop-filter: blur(3px);
 }
+[data-theme="dark"] .modal-backdrop { background: rgba(0, 0, 0, .62); }
 .modal {
   width: 100%; max-width: 640px; max-height: 88dvh;
   background: var(--bg-elev);

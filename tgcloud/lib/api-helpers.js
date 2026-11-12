@@ -55,6 +55,8 @@ export function cardView(c) {
     back: c.back,
     house: c.house,
     ease: c.ease,
+    stability: c.stability,
+    difficulty: c.difficulty,
     reps: c.reps,
     lapses: c.lapses,
     due: c.due instanceof Date ? Math.floor(c.due.getTime() / 1000) : c.due,

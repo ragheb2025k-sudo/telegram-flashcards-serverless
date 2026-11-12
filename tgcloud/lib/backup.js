@@ -32,6 +32,7 @@ export async function loadAccount(userId) {
     emoji: d.emoji,
     cards: (byDeck.get(d.id) || []).map((c) => ({
       front: c.front, back: c.back, house: c.house, ease: c.ease,
+      stability: c.stability, difficulty: c.difficulty,
       reps: c.reps, lapses: c.lapses, due: c.due, lastResult: c.lastResult,
     })),
   }));
@@ -39,6 +40,7 @@ export async function loadAccount(userId) {
     user,
     settings: user ? {
       lang: user.lang, theme: user.theme, failBehavior: user.failBehavior,
+      dailyGoal: user.dailyGoal ?? 20,
     } : null,
     decks: deckList,
     cardCount: cardRows.length,
