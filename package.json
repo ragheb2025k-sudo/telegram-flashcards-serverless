@@ -1,0 +1,14 @@
+{
+  "name": "flashcards-telegram-serverless",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telegram Serverless bot + Mini App for spaced-repetition flashcards (fa/en)",
+  "scripts": {
+    "deploy": "tgcloud push",
+    "db:migrate": "tgcloud migrate",
+    "status": "tgcloud status"
+  },
+  "devDependencies": {
+    "@tgcloud/cli": "^0.2.0"
+  }
+}

@@ -1,0 +1,7 @@
+# CLI state — contains your credentials, never commit
+.tgcloud/
+
+node_modules/
+*.log
+dev.log
+.DS_Store

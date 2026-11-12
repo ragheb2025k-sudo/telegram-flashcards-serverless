@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="color-scheme" content="light dark">
+  <title>FlashCards · فلش‌کارت</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app" class="app">
+
+    <!-- ======== Top bar ======== -->
+    <header class="topbar" id="topbar">
+      <button class="icon-btn hidden" id="btn-back" aria-label="Back">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="topbar-title" id="topbar-title">
+        <span class="logo-chip">🃏</span>
+        <h1 id="app-title">FlashCards</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btn-theme" aria-label="Theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ======== Loading ======== -->
+    <div class="boot" id="boot">
+      <div class="boot-card">
+        <div class="boot-logo">🃏</div>
+        <div class="spinner"></div>
+        <p id="boot-text">Loading…</p>
+      </div>
+    </div>
+
+    <main id="screens">
+      <!-- ======== HOME ======== -->
+      <section class="screen" id="screen-home">
+        <div class="hero">
+          <div class="hero-row">
+            <div>
+              <h2 id="home-greeting">Hello 👋</h2>
+              <p class="hero-sub" id="home-sub"></p>
+            </div>
+            <div class="streak-chip" id="streak-chip" hidden>
+              <span>🔥</span><b id="streak-val">0</b>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-review-all" id="btn-review-all">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span id="review-all-label">Review</span>
+          </button>
+        </div>
+
+        <div class="stats-row" id="stats-row"></div>
+
+        <div class="section-head">
+          <h3 data-t="decks" id="decks-title">Decks</h3>
+          <button class="btn btn-ghost btn-sm" id="btn-new-deck">＋ <span data-t="newDeck" id="new-deck-label">New</span></button>
+        </div>
+        <div class="deck-grid" id="deck-list"></div>
+        <div class="empty" id="home-empty" hidden>
+          <div class="empty-emoji">🗂</div>
+          <p id="home-empty-text"></p>
+        </div>
+      </section>
+
+      <!-- ======== DECK ======== -->
+      <section class="screen hidden" id="screen-deck">
+        <div class="deck-head card">
+          <div class="deck-head-row">
+            <span class="deck-emoji" id="deck-emoji">📚</span>
+            <div class="deck-head-info">
+              <h2 id="deck-name"></h2>
+              <p id="deck-meta"></p>
+            </div>
+          </div>
+          <div class="deck-actions">
+            <button class="btn btn-primary btn-sm" id="btn-deck-review">▶ <span id="deck-review-label">Review</span></button>
+            <button class="btn btn-secondary btn-sm" id="btn-add-card">＋ <span data-t="addCard" id="add-card-label">Card</span></button>
+            <button class="btn btn-secondary btn-sm" id="btn-import">⬆ <span data-t="importFile" id="import-label">Import</span></button>
+            <div class="menu-wrap">
+              <button class="icon-btn" id="btn-deck-menu" aria-label="More">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+              </button>
+              <div class="menu hidden" id="deck-menu">
+                <button id="menu-rename">✏️ <span data-t="menuRename">Rename</span></button>
+                <button id="menu-reset">♻️ <span data-t="menuReset">Reset progress</span></button>
+                <button id="menu-delete" class="danger">🗑️ <span data-t="menuDelete">Delete deck</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="house-legend" id="house-legend"></div>
+        <div class="card-list" id="card-list"></div>
+        <div class="empty" id="deck-empty" hidden>
+          <div class="empty-emoji">🃏</div>
+          <p id="deck-empty-text"></p>
+        </div>
+      </section>
+
+      <!-- ======== REVIEW ======== -->
+      <section class="screen hidden" id="screen-review">
+        <div class="review-top">
+          <div class="progress-track"><div class="progress-fill" id="review-progress"></div></div>
+          <div class="review-meta">
+            <span id="review-count">0 / 0</span>
+            <span id="review-house"></span>
+          </div>
+        </div>
+
+        <div class="flashcard-wrap">
+          <div class="flashcard" id="flashcard" role="button" tabindex="0" aria-label="Flip card">
+            <div class="flashcard-inner">
+              <div class="flashcard-face flashcard-front">
+                <span class="card-side-label" id="label-front">Question</span>
+                <div class="card-text" id="card-front" dir="auto"></div>
+                <span class="card-hint" id="hint-tap">tap to flip</span>
+              </div>
+              <div class="flashcard-face flashcard-back">
+                <span class="card-side-label" id="label-back">Answer</span>
+                <div class="card-text" id="card-back" dir="auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-actions">
+          <button class="action-btn wrong" id="btn-wrong" aria-label="Wrong">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+          <button class="action-btn flip" id="btn-flip" aria-label="Flip">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          </button>
+          <button class="action-btn right" id="btn-right" aria-label="Correct">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ======== SUMMARY ======== -->
+      <section class="screen hidden" id="screen-summary">
+        <div class="summary card">
+          <div class="summary-emoji" id="summary-emoji">🎉</div>
+          <h2 id="summary-title">Session complete!</h2>
+          <p class="summary-sub" id="summary-sub"></p>
+          <div class="summary-stats">
+            <div class="sum-box good"><b id="sum-right">0</b><span id="sum-right-label">Correct</span></div>
+            <div class="sum-box bad"><b id="sum-wrong">0</b><span id="sum-wrong-label">Wrong</span></div>
+          </div>
+          <p class="summary-next" id="summary-next"></p>
+          <div class="summary-actions">
+            <button class="btn btn-primary" id="btn-summary-continue" hidden></button>
+            <button class="btn btn-secondary" id="btn-summary-home"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======== SETTINGS ======== -->
+      <section class="screen hidden" id="screen-settings">
+        <div class="settings-group card">
+          <h3 data-t="setLanguage">Language</h3>
+          <div class="segmented" id="seg-lang">
+            <button data-lang="fa">فارسی</button>
+            <button data-lang="en">English</button>
+          </div>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setTheme">Theme</h3>
+          <div class="segmented" id="seg-theme">
+            <button data-theme="light"><span>☀️</span><span data-t="themeLight">Light</span></button>
+            <button data-theme="dark"><span>🌙</span><span data-t="themeDark">Dark</span></button>
+            <button data-theme="auto"><span>⚙️</span><span data-t="themeAuto">Auto</span></button>
+          </div>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setFail">Missed card goes to…</h3>
+          <label class="radio-card" id="opt-house1">
+            <input type="radio" name="failBehavior" value="house1">
+            <div class="radio-body">
+              <b data-t="failHouse1">First house</b>
+              <small data-t="failHouse1Desc">Back to house 1 — review it sooner (harder)</small>
+            </div>
+            <span class="radio-dot"></span>
+          </label>
+          <label class="radio-card" id="opt-previous">
+            <input type="radio" name="failBehavior" value="previous">
+            <div class="radio-body">
+              <b data-t="failPrev">Previous house</b>
+              <small data-t="failPrevDesc">Drop just one house — gentler punishment</small>
+            </div>
+            <span class="radio-dot"></span>
+          </label>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setBackup">Backup</h3>
+          <p class="settings-hint" data-t="backupHint">Get a ZIP file with all your decks (JSON + CSV) sent to this chat. To restore, send the same file back to the bot.</p>
+          <button class="btn btn-secondary" id="btn-backup">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            <span data-t="backupBtn">Create backup (ZIP)</span>
+          </button>
+        </div>
+
+        <div class="settings-group card">
+          <h3 data-t="setSrs">Review schedule</h3>
+          <p class="settings-hint" data-t="srsHint">Cards move through 5 houses. Correct answers promote a card (longer intervals: 1 → 3 → 7 → 16 → 35 days); a missed card comes back in 10 minutes and drops houses based on your setting above. Each card also carries an adaptive difficulty (ease) factor, SM-2 style.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- FAB -->
+    <button class="fab hidden" id="fab" aria-label="New deck">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+
+    <!-- modal root -->
+    <div id="modal-root"></div>
+    <div id="toast" class="toast" role="status"></div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
