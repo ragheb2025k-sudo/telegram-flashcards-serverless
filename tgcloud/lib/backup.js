@@ -71,8 +71,8 @@ export function buildBackupZip(account) {
     files.push({ name: `decks/${base}.csv`, data: enc.encode(toCsv(rows)) });
   }
   files.push({ name: 'README.txt', data: enc.encode(
-    'FlashCards backup (Telegram Serverless bot)\n' +
-    'پشتیبان فلش‌کارت (بات تلگرام)\n\n' +
+    'Card Flow backup (Telegram Serverless bot)\n' +
+    'پشتیبان کارت‌فلو (بات تلگرام)\n\n' +
     'flashcards.json — full data (restore: send this ZIP or the JSON back to the bot)\n' +
     'فایل کامل داده‌ها (برای بازیابی همین ZIP یا فایل JSON را به بات بفرستید)\n' +
     'decks/*.csv — human-readable copies of each deck\n' +

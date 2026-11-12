@@ -11,10 +11,10 @@ const T = {
     chooseLang: '🇮🇷 فارسی یا 🇬🇧 English؟\n\nزبان رابط کاربری بات و مینی‌اپ را انتخاب کنید:',
     langSet: 'زبان روی فارسی تنظیم شد ✅',
     welcome:
-      '🃏 <b>به فلش‌کارت خوش آمدید!</b>\n\n' +
-      'با این بات مجموعه‌های فلش‌کارت بسازید و با روش <b>مرور فاصله‌دار</b> (بر پایهٔ جعبهٔ لایتنر و تحقیقات نوین یادگیری) آن‌ها را برای همیشه به خاطر بسپارید.\n\n' +
+      '🌀 <b>به کارت‌فلو خوش آمدید!</b>\n\n' +
+      'با این بات مجموعه‌های فلش‌کارت بسازید و با روش <b>مرور فاصله‌دار</b> (بر پایهٔ الگوریتم FSRS و تحقیقات نوین یادگیری) آن‌ها را برای همیشه به خاطر بسپارید.\n\n' +
       '<b>دکمهٔ زیر را بزنید تا مینی‌اپ باز شود 👇</b>',
-    openBtn: '🚀 باز کردن فلش‌کارت‌ها',
+    openBtn: '🚀 باز کردن کارت‌فلو',
     whatNext: 'می‌توانید از همین‌جا شروع کنید:',
     fallback:
       'این بات از طریق <b>مینی‌اپ</b> کار می‌کند — ساخت و مرور کارت‌ها آنجاست.\n\n' +
@@ -30,7 +30,7 @@ const T = {
       '/support — پشتیبانی\n' +
       '/delete_my_data — حذف کامل داده‌ها',
     help:
-      '📖 <b>راهنمای فلش‌کارت</b>\n\n' +
+      '📖 <b>راهنمای کارت‌فلو</b>\n\n' +
       '<b>ساخت کارت</b>\n' +
       '• در مینی‌اپ: دکمهٔ «دستهٔ جدید» یا «افزودن کارت»\n' +
       '• با فایل: همین‌جا در چت، فایل را بفرستید (CSV / TSV / TXT / JSON)\n\n' +
@@ -42,7 +42,7 @@ const T = {
       '<b>نکته: با هوش مصنوعی کارت بساز</b>\n' +
       'در مینی‌اپ، داخل «ایمپورت کارت‌ها» یک پرامپت آماده برای تبدیل هر متنی به فایل فلش‌کارت وجود دارد؛ آن را کپی کنید و همراه متن خودت به ChatGPT یا Gemini بده، خروجی CSV را ایمپورت کن.\n\n' +
       '<b>مرور و زمان‌بندی</b>\n' +
-      'هر کارت در یکی از ۵ خانه است. جواب درست = یک خانه بالاتر (فاصلهٔ مرور بلندتر)، جواب ناپاس = برگشت به خانهٔ اول یا خانهٔ قبلی (قابل تنظیم در مینی‌اپ). فاصله‌ها: ۱، ۳، ۷، ۱۶ و ۳۵ روز.\n\n' +
+      'زمان‌بندی با الگوریتم <b>FSRS</b> انجام می‌شود — مدرن‌ترین روش مرور فاصله‌دار، همان خانوادهٔ الگوریتم Anki جدید. هر پاسخ، فاصلهٔ مرور بعدی را بر پایهٔ حافظهٔ خودت تنظیم می‌کند؛ جواب ناپاس کارت را ۱۰ دقیقه بعد و طبق حالت انتخابی در تنظیمات برمی‌گرداند. هدف روزانه و زنجیرهٔ مطالعه هم در مینی‌اپ فعال است.\n\n' +
       '<b>پشتیبان‌گیری</b>\n' +
       '/backup — فایل ZIP شامل JSON کامل + CSV هر دسته می‌سازد. برای بازیابی، همان فایل ZIP یا JSON را دوباره به چت بفرستید.',
     newGuide:
@@ -81,7 +81,7 @@ const T = {
     rateLimited: '⏳ کمی آرام‌تر! چند لحظه بعد دوباره تلاش کنید.',
     privateOnly: '🔒 این فرمان فقط در چت خصوصی با بات کار می‌کند. لطفاً همین‌جا در پیوی بفرستید.',
     privacy:
-      '🔐 <b>سیاست حفظ حریم خصوصی</b>\n\n' +
+      '🔐 <b>سیاست حفظ حریم خصوصی کارت‌فلو</b>\n\n' +
       'چه داده‌هایی ذخیره می‌شود:\n' +
       '• شناسهٔ عددی تلگرام، نام کوچک، کد زبان\n' +
       '• محتوای فلش‌کارت‌های شما: دسته‌ها، کارت‌ها، پیشرفت مرور، هدف روزانه و زنجیره\n\n' +
@@ -119,10 +119,10 @@ const T = {
     chooseLang: '🇬🇧 English or 🇮🇷 فارسی؟\n\nChoose the language of the bot and the Mini App:',
     langSet: 'Language set to English ✅',
     welcome:
-      '🃏 <b>Welcome to FlashCards!</b>\n\n' +
-      'Build flashcard decks and memorize them for good with <b>spaced repetition</b> (Leitner boxes, informed by modern learning science).\n\n' +
+      '🌀 <b>Welcome to Card Flow!</b>\n\n' +
+      'Build flashcard decks and memorize them for good with <b>spaced repetition</b> (FSRS scheduling — the modern evidence-based standard).\n\n' +
       '<b>Tap the button below to open the Mini App 👇</b>',
-    openBtn: '🚀 Open FlashCards',
+    openBtn: '🚀 Open Card Flow',
     whatNext: 'You can start right away:',
     fallback:
       'This bot works through its <b>Mini App</b> — that is where you create and study cards.\n\n' +
@@ -138,7 +138,7 @@ const T = {
       '/support — support\n' +
       '/delete_my_data — delete all my data',
     help:
-      '📖 <b>FlashCards guide</b>\n\n' +
+      '📖 <b>Card Flow guide</b>\n\n' +
       '<b>Creating cards</b>\n' +
       '• In the Mini App: use “New deck” or “Add card”\n' +
       '• From a file: send it right here in the chat (CSV / TSV / TXT / JSON)\n\n' +
@@ -150,7 +150,7 @@ const T = {
       '<b>Tip: build cards with AI</b>\n' +
       'Inside the Mini App’s “Import cards” dialog you get a ready-made prompt that turns any text into a flashcard file — copy it, give it to ChatGPT or Gemini together with your text, then import the CSV output.\n\n' +
       '<b>Reviewing & scheduling</b>\n' +
-      'Every card lives in one of 5 houses. A correct answer promotes it one house (longer interval); a miss sends it back to house 1 — or to the previous house (configurable in the Mini App). Intervals: 1, 3, 7, 16 and 35 days.\n\n' +
+      'Scheduling is powered by <b>FSRS</b> — the state-of-the-art spaced-repetition algorithm behind modern Anki. Every answer adapts the next interval to your memory; a miss brings the card back in 10 minutes, using the lapse mode chosen in settings. Daily goals and study streaks are built in too.\n\n' +
       '<b>Backup</b>\n' +
       '/backup — builds a ZIP with the full JSON + a CSV per deck. To restore, simply send the same ZIP (or its JSON) back to this chat.',
     newGuide:
@@ -189,7 +189,7 @@ const T = {
     rateLimited: '⏳ Easy there! Please wait a moment and try again.',
     privateOnly: '🔒 This command only works in a private chat with the bot. Please send it here in DM.',
     privacy:
-      '🔐 <b>Privacy Policy</b>\n\n' +
+      '🔐 <b>Card Flow Privacy Policy</b>\n\n' +
       'What we store:\n' +
       '• Your numeric Telegram id, first name, language code\n' +
       '• Your flashcard content: decks, cards, review progress, daily goal & streak\n\n' +

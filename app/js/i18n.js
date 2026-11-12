@@ -1,7 +1,7 @@
 // js/i18n.js — Mini App UI translations (fa / en)
 window.I18N = {
   fa: {
-    appName: 'فلش‌کارت',
+    appName: 'کارت‌فلو',
     loading: 'در حال بارگذاری…',
     demoBanner: 'حالت نمایشی (خارج از تلگرام) — داده‌ها فقط در مرورگر شما ذخیره می‌شوند.',
     // home
@@ -105,7 +105,7 @@ window.I18N = {
     guideNext: 'بعدی',
     guideSkip: 'رد شدن',
     guideStart: 'شروع کنیم!',
-    g1t: 'به فلش‌کارت خوش آمدید 🃏',
+    g1t: 'به کارت‌فلو خوش آمدید 🃏',
     g1d: 'اینجا کارت‌های یادگیریت را می‌سازی و با مرور فاصله‌دار برای همیشه به خاطر می‌سپاری.\nاول با «＋ دستهٔ جدید» یک دسته بساز.',
     g2t: 'کارت اضافه کن ✍️',
     g2d: 'کارت‌ها را دستی وارد کن یا با «⬆ ایمپورت» از فایل CSV / TSV / TXT / JSON بیاور؛ می‌توانی فایل را همین‌جا در چت هم برای بات بفرستی.\nدر پنجرهٔ ایمپورت یک پرامپت آمادهٔ هوش مصنوعی هست که هر متنی را به فایل کارت تبدیل می‌کند.',
@@ -207,7 +207,7 @@ window.I18N = {
     house5: 'تسلط کامل',
   },
   en: {
-    appName: 'FlashCards',
+    appName: 'Card Flow',
     loading: 'Loading…',
     demoBanner: 'Demo mode (outside Telegram) — data is stored only in this browser.',
     hello: 'Hello',
@@ -306,7 +306,7 @@ window.I18N = {
     guideNext: 'Next',
     guideSkip: 'Skip',
     guideStart: 'Let’s go!',
-    g1t: 'Welcome to FlashCards 🃏',
+    g1t: 'Welcome to Card Flow 🃏',
     g1d: 'Build your study cards here and remember them for good with spaced repetition.\nStart by creating a deck with “＋ New deck”.',
     g2t: 'Add cards ✍️',
     g2d: 'Enter cards manually or import a CSV / TSV / TXT / JSON file with “⬆ Import” — you can also send the file to the bot right here in the chat.\nInside the import dialog there is a ready-made AI prompt that turns any text into a card file.',

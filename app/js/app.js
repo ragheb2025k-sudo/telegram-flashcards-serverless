@@ -1,5 +1,5 @@
 /* ============================================================
-   FlashCards Mini App — application logic
+   Card Flow (کارت‌فلو) Mini App — application logic
    Vanilla JS. Talks to the bot's serverless endpoints via
    Telegram.WebApp.Serverless.call; falls back to a full local
    demo mode (localStorage) outside Telegram.

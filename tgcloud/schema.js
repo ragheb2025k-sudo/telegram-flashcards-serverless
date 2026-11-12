@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// FlashCards bot — database schema (SQLite-backed, Drizzle-like DSL)
+// Card Flow (کارت‌فلو) bot — database schema (SQLite-backed, Drizzle-like DSL)
 // NOTE: the runtime has PRAGMA foreign_keys OFF — integrity is enforced in
 // application code (see lib/users.js and endpoints), never via FKs.
 // ---------------------------------------------------------------------------
